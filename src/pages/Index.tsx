@@ -21,6 +21,7 @@ export interface WritingSubmission {
 export interface AIFeedback {
   score: string;
   explanation: string;
+  lineByLineAnalysis: string;
   markedErrors: string;
   improvedText: string;
 }

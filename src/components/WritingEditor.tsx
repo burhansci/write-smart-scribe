@@ -76,6 +76,7 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
       const feedback: AIFeedback = {
         score: parsedFeedback.score,
         explanation: parsedFeedback.explanation,
+        lineByLineAnalysis: parsedFeedback.lineByLineAnalysis,
         markedErrors: parsedFeedback.markedErrors,
         improvedText: parsedFeedback.improvedText
       };

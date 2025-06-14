@@ -32,6 +32,21 @@ Write a concise analysis (100-120 words) covering:
 
 Focus on 2-3 key strengths and 2-3 priority areas for improvement.
 
+**Line-by-Line Analysis**
+Analyze each sentence individually. For each sentence, provide detailed feedback on:
+- Vocabulary: Word choice, academic level, collocations
+- Grammar: Tense, agreement, articles, sentence structure
+- Spelling: Typos, consistency (British/American)
+- Punctuation: Commas, periods, apostrophes, semicolons
+- Phrasing: Clarity, conciseness, natural flow
+- Style: Formal/informal tone, academic conventions
+
+Format each line as:
+Line [number]: "[original sentence]"
+Issues: [List specific problems with categories]
+Suggestions: [Specific improvements]
+Priority: [High/Medium/Low based on band score impact]
+
 **Marked Errors**
 Identify 5-8 critical errors that impact the band score. Use this exact format:
 [error_text]{ErrorType: Specific correction}
@@ -97,6 +112,7 @@ export const parseDeepSeekResponse = (response: string) => {
   
   let score = '';
   let explanation = '';
+  let lineByLineAnalysis = '';
   let markedErrors = '';
   let improvedText = '';
 
@@ -112,6 +128,8 @@ export const parseDeepSeekResponse = (response: string) => {
       score = scoreMatch ? scoreMatch[1] : sectionContent.trim().split('\n')[0];
     } else if (sectionHeader.includes('explanation')) {
       explanation = sectionContent.trim();
+    } else if (sectionHeader.includes('line-by-line') || sectionHeader.includes('line by line')) {
+      lineByLineAnalysis = sectionContent.trim();
     } else if (sectionHeader.includes('marked') && sectionHeader.includes('error')) {
       markedErrors = sectionContent.trim();
     } else if (sectionHeader.includes('improved') || sectionHeader.includes('suggestions')) {
@@ -127,6 +145,10 @@ export const parseDeepSeekResponse = (response: string) => {
   if (!explanation) {
     explanation = 'Your writing shows good understanding with areas for improvement in vocabulary, grammar, and organization.';
   }
+
+  if (!lineByLineAnalysis) {
+    lineByLineAnalysis = 'Line-by-line analysis not available in this response.';
+  }
   
   if (!markedErrors) {
     markedErrors = 'No specific errors marked in this analysis.';
@@ -140,6 +162,7 @@ export const parseDeepSeekResponse = (response: string) => {
   console.log('Parsed results:', { 
     score, 
     explanation: explanation.substring(0, 100), 
+    lineByLineAnalysis: lineByLineAnalysis.substring(0, 100),
     markedErrors: markedErrors.substring(0, 100), 
     improvedText: improvedText.substring(0, 100) 
   });
@@ -147,6 +170,7 @@ export const parseDeepSeekResponse = (response: string) => {
   return {
     score: score || '6.0',
     explanation: explanation || 'Analysis completed',
+    lineByLineAnalysis: lineByLineAnalysis,
     markedErrors: markedErrors || 'No errors marked',
     improvedText: improvedText
   };
