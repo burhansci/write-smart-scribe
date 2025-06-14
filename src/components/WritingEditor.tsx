@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -8,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { WritingSubmission, AIFeedback } from "@/pages/Index";
+import { createDeepSeekPrompt, callDeepSeekAPI, parseDeepSeekResponse } from "@/lib/deepseek";
+import ApiKeyInput from "./ApiKeyInput";
 
 interface WritingEditorProps {
   onSubmissionComplete: (submission: WritingSubmission) => void;
@@ -17,8 +18,25 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
   const [text, setText] = useState('');
   const [scoringSystem, setScoringSystem] = useState<'IELTS' | 'GRE'>('IELTS');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem('deepseek_api_key');
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
+  }, []);
 
   const analyzeWriting = async () => {
+    if (!apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please set your DeepSeek API key to analyze writing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!text.trim()) {
       toast({
         title: "Error",
@@ -40,68 +58,47 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
     setIsAnalyzing(true);
 
     try {
-      // Create the prompt for AI analysis
-      const prompt = `You are an expert ${scoringSystem} writing evaluator. The user will provide a writing sample. Your task is to do the following:
-
-1. Score the writing:
-   - Give an estimated ${scoringSystem === 'IELTS' ? 'IELTS band' : 'GRE AWA'} score.
-   - Explain the score in these categories:
-     a. Task Response / Issue Analysis
-     b. Coherence and Cohesion
-     c. Lexical Resource
-     d. Grammar and Sentence Structure
-
-2. Error Marking (Original Text):
-   - Mark all grammar, spelling, and style mistakes inline using this format:
-     [mistake]{ErrorType: Explanation}
-
-3. Correction Display:
-   - Show a corrected version of the user's text using these inline tags:
-     [+added_word+], [~wrong_word~]
-
-4. Enhancement Suggestions:
-   - In the user's original writing, show where linking words, transitions, or better structures could be inserted using:
-     [+linking_phrase+]{Suggestion}
-   - Do NOT rewrite the entire writing. Only suggest local improvements.
-
-Return your answer in 4 sections:
-**Score**
-**Explanation**
-**Marked Errors**
-**Improved with Suggestions**
-
-Here is the writing sample:
-${text}`;
-
-      // Simulate AI response for now - in production, this would call DeepSeek-V1
-      const simulatedResponse = await simulateAIAnalysis(text, scoringSystem);
+      console.log('Starting DeepSeek analysis...');
+      const messages = createDeepSeekPrompt(text, scoringSystem);
+      const response = await callDeepSeekAPI(messages, apiKey);
+      console.log('DeepSeek response:', response);
+      
+      const parsedFeedback = parseDeepSeekResponse(response);
+      console.log('Parsed feedback:', parsedFeedback);
+      
+      const feedback: AIFeedback = {
+        score: parsedFeedback.score,
+        explanation: parsedFeedback.explanation,
+        markedErrors: parsedFeedback.markedErrors,
+        improvedText: parsedFeedback.improvedText
+      };
       
       const submission: WritingSubmission = {
         id: Date.now().toString(),
         text,
         scoringSystem,
         timestamp: new Date(),
-        feedback: simulatedResponse
+        feedback
       };
 
       // Save to localStorage
       const savedSubmissions = JSON.parse(localStorage.getItem('writingSubmissions') || '[]');
       savedSubmissions.unshift(submission);
-      localStorage.setItem('writingSubmissions', JSON.stringify(savedSubmissions.slice(0, 10))); // Keep only last 10
+      localStorage.setItem('writingSubmissions', JSON.stringify(savedSubmissions.slice(0, 10)));
 
       onSubmissionComplete(submission);
       setText('');
       
       toast({
         title: "Analysis Complete!",
-        description: "Your writing has been analyzed. Check the feedback tab.",
+        description: "Your writing has been analyzed by DeepSeek-V1. Check the feedback tab.",
       });
 
     } catch (error) {
-      console.error('Analysis error:', error);
+      console.error('DeepSeek analysis error:', error);
       toast({
         title: "Analysis Error",
-        description: "Failed to analyze your writing. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to analyze your writing. Please check your API key and try again.",
         variant: "destructive",
       });
     } finally {
@@ -109,29 +106,12 @@ ${text}`;
     }
   };
 
-  // Simulate AI analysis - replace with actual DeepSeek-V1 API call
-  const simulateAIAnalysis = async (text: string, system: 'IELTS' | 'GRE'): Promise<AIFeedback> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const score = system === 'IELTS' ? 
-      `Band ${(Math.random() * 2 + 6).toFixed(1)}` : 
-      `AWA Score: ${(Math.random() * 2 + 4).toFixed(1)}`;
-
-    return {
-      score,
-      explanation: `Your writing demonstrates ${system === 'IELTS' ? 'good task response' : 'clear issue analysis'} with coherent structure. There are opportunities to improve vocabulary range and grammatical accuracy.`,
-      markedErrors: text.replace(/\b(the)\b/g, '[the]{Article: Consider if this article is necessary}')
-                       .replace(/\b(and)\b/g, '[and]{Conjunction: Consider using more varied linking words}'),
-      improvedText: text.replace(/\b(However)\b/g, '[+Furthermore+]')
-                       .replace(/\b(very)\b/g, '[~very~][+extremely+]')
-    };
-  };
-
   const wordCount = text.trim().split(/\s+/).filter(word => word.length > 0).length;
 
   return (
     <div className="space-y-6">
+      <ApiKeyInput onApiKeySet={setApiKey} currentApiKey={apiKey} />
+      
       <CardHeader className="px-0 pt-0">
         <CardTitle className="flex items-center gap-2">
           <div className="p-2 bg-blue-100 rounded-lg">
@@ -178,13 +158,13 @@ ${text}`;
           </p>
           <Button 
             onClick={analyzeWriting} 
-            disabled={isAnalyzing || wordCount < 1}
+            disabled={isAnalyzing || wordCount < 1 || !apiKey}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {isAnalyzing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Analyzing...
+                Analyzing with DeepSeek...
               </>
             ) : (
               <>
