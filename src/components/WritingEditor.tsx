@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,70 +14,61 @@ interface WritingEditorProps {
   onSubmissionComplete: (submission: WritingSubmission) => void;
 }
 
-const IELTS_TASK_2_PROMPTS: string[] = [
-  "Some people believe that professional workers such as doctors and teachers should be paid more than sports and entertainment personalities. To what extent do you agree or disagree?",
-  "Many people think that the government should spend money on faster public transport. Others think that there are other important priorities (e.g., cost, environment). Discuss both views and give your opinion.",
-  "It is better for students to study in groups rather than alone. Do you agree or disagree?",
-  "In some countries, young people are encouraged to work or travel for a year between finishing high school and starting university studies. Discuss the advantages and disadvantages for young people who decide to do this.",
-  "Some believe that people should make efforts to fight climate change, while others think it is better to learn to live with it. Discuss both views and give your own opinion."
-];
-
-const GRE_ISSUE_PROMPTS: string[] = [
-  "To understand the most important characteristics of a society, one must study its major cities.",
-  "Governments should focus on solving the immediate problems of today rather than on trying to solve the anticipated problems of the future.",
-  "Educational institutions have a responsibility to dissuade students from pursuing fields of study in which they are unlikely to succeed.",
-  "The measure of a society’s progress is the well-being of its least fortunate members.",
-  "Originality does not mean thinking something that was never thought before; it means putting old ideas together in new ways."
-];
-
-const GRE_ARGUMENT_PROMPTS: string[] = [
-  "The following appeared as part of a letter to the editor of a scientific journal: 'A recent study of eighteen rhesus monkeys provides evidence that vision is improved when daily supplements of beta-carotene are included in their diets. Based on this study, it seems clear that people who include foods high in beta-carotene, such as carrots, in their diets will have better vision.' Evaluate the argument and discuss how well reasoned you find it.",
-  "The following appeared in a memorandum from the business department of the Apogee Company: 'A recent review of Apogee’s customer service policies has led to the recommendation that all Apogee employees undergo training in customer relations. The Apogee Company is facing increased competition, and this training will help maintain our reputation for excellent service.' Evaluate the argument and discuss how well reasoned you find it.",
-  "The following appeared in a memorandum from the manager of WWAC Radio Station: ‘WWAC must change from rock-and-roll to continuous news if it is to attract more listeners and remain financially viable.' Evaluate the argument and discuss how well reasoned you find it.",
-  "The following appeared as part of an article in a magazine devoted to regional lifestyles: 'Since many people enjoy recreational activities such as fishing and camping, we should build new parks to boost local tourism and the economy.' Evaluate the argument and discuss how well reasoned you find it.",
-  "The following is from a letter to a publisher: 'Since its release, the literary magazine, The Modern Review, has seen a decline in subscriptions. Introducing more reviews of popular fiction should revive interest.' Evaluate the argument and discuss how well reasoned you find it."
-];
-
 type ScoringSystem = 'IELTS' | 'GRE';
 type WritingType = 'IELTS_TASK_2' | 'GRE_ISSUE' | 'GRE_ARGUMENT';
 
 const getDefaultWritingType = (scoringSystem: ScoringSystem): WritingType =>
   scoringSystem === 'IELTS' ? 'IELTS_TASK_2' : 'GRE_ISSUE';
 
-const getPromptList = (writingType: WritingType): string[] => {
-  switch (writingType) {
-    case 'IELTS_TASK_2': return IELTS_TASK_2_PROMPTS;
-    case 'GRE_ISSUE': return GRE_ISSUE_PROMPTS;
-    case 'GRE_ARGUMENT': return GRE_ARGUMENT_PROMPTS;
-    default: return [];
-  }
-};
+// Function to generate AI-powered questions
+const generateAIQuestion = async (writingType: WritingType, apiKey: string): Promise<string> => {
+  const prompts = {
+    'IELTS_TASK_2': `Generate a unique IELTS Task 2 writing prompt. The prompt should:
+- Be about current social, educational, environmental, or technological issues
+- Ask the candidate to discuss both views and give their opinion, OR agree/disagree with a statement, OR discuss advantages/disadvantages
+- Be suitable for a 250+ word essay
+- Be different from common IELTS questions
+- Only return the question itself, nothing else`,
+    
+    'GRE_ISSUE': `Generate a unique GRE Issue task prompt. The prompt should:
+- Present a claim about society, education, politics, technology, or human nature
+- Be suitable for analytical writing where the test taker discusses their agreement/disagreement
+- Be thought-provoking and allow for multiple perspectives
+- Be suitable for a 300-500 word response
+- Only return the statement itself, nothing else`,
+    
+    'GRE_ARGUMENT': `Generate a unique GRE Argument task prompt. The prompt should:
+- Present a flawed argument (like a business memo, letter to editor, or report)
+- Include logical fallacies or weak reasoning that can be critiqued
+- Ask the test taker to evaluate the argument's reasoning
+- Be suitable for a 300-500 word analysis
+- Only return the argument prompt itself, nothing else`
+  };
 
-// Function to get next unique question
-const getNextUniquePrompt = (writingType: WritingType): string => {
-  const storageKey = `usedPrompts_${writingType}`;
-  const allPrompts = getPromptList(writingType);
-  const usedPrompts = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  
-  // If all prompts have been used, reset the used prompts list
-  if (usedPrompts.length >= allPrompts.length) {
-    localStorage.setItem(storageKey, '[]');
-    const firstPrompt = allPrompts[0];
-    localStorage.setItem(storageKey, JSON.stringify([firstPrompt]));
-    return firstPrompt;
+  try {
+    const messages = [
+      {
+        role: 'system' as const,
+        content: 'You are an expert test question generator. Generate only the question/prompt requested, nothing else.'
+      },
+      {
+        role: 'user' as const,
+        content: prompts[writingType]
+      }
+    ];
+
+    const response = await callDeepSeekAPI(messages, apiKey);
+    return response.trim();
+  } catch (error) {
+    console.error('Error generating AI question:', error);
+    // Fallback to a basic question if AI generation fails
+    const fallbacks = {
+      'IELTS_TASK_2': 'Some people believe that technology has improved our lives, while others think it has created more problems. Discuss both views and give your own opinion.',
+      'GRE_ISSUE': 'The best way to understand the character of a society is to examine the character of the people who choose to lead it.',
+      'GRE_ARGUMENT': 'The following appeared in a memo from a company executive: "Our sales have declined over the past year. To improve our performance, we should reduce our workforce by 10% and focus on our most profitable products." Evaluate the argument and discuss how well reasoned you find it.'
+    };
+    return fallbacks[writingType];
   }
-  
-  // Find unused prompts
-  const unusedPrompts = allPrompts.filter(prompt => !usedPrompts.includes(prompt));
-  
-  // Get random unused prompt
-  const selectedPrompt = unusedPrompts[Math.floor(Math.random() * unusedPrompts.length)];
-  
-  // Add to used prompts
-  const updatedUsedPrompts = [...usedPrompts, selectedPrompt];
-  localStorage.setItem(storageKey, JSON.stringify(updatedUsedPrompts));
-  
-  return selectedPrompt;
 };
 
 const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
@@ -84,6 +76,7 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
   const [scoringSystem, setScoringSystem] = useState<ScoringSystem>('IELTS');
   const [writingType, setWritingType] = useState<WritingType>(getDefaultWritingType('IELTS'));
   const [question, setQuestion] = useState<string>('');
+  const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Use the hardcoded API key
@@ -91,27 +84,44 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
 
   // Initialize question on first load
   useEffect(() => {
-    setQuestion(getNextUniquePrompt('IELTS_TASK_2'));
+    generateNewQuestion('IELTS_TASK_2');
   }, []);
 
   // Reset type and question when scoring system changes
   useEffect(() => {
     if (scoringSystem === 'IELTS') {
       setWritingType('IELTS_TASK_2');
-      setQuestion(getNextUniquePrompt('IELTS_TASK_2'));
+      generateNewQuestion('IELTS_TASK_2');
     } else {
       setWritingType('GRE_ISSUE');
-      setQuestion(getNextUniquePrompt('GRE_ISSUE'));
+      generateNewQuestion('GRE_ISSUE');
     }
   }, [scoringSystem]);
 
   // Reset question if writing type changes
   useEffect(() => {
-    setQuestion(getNextUniquePrompt(writingType));
+    generateNewQuestion(writingType);
   }, [writingType]);
 
+  const generateNewQuestion = async (type: WritingType) => {
+    setIsGeneratingQuestion(true);
+    try {
+      const newQuestion = await generateAIQuestion(type, HARDCODED_API_KEY);
+      setQuestion(newQuestion);
+    } catch (error) {
+      console.error('Failed to generate question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate a new question. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingQuestion(false);
+    }
+  };
+
   const getNewQuestion = () => {
-    setQuestion(getNextUniquePrompt(writingType));
+    generateNewQuestion(writingType);
   };
 
   const analyzeWriting = async () => {
@@ -239,13 +249,25 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
             className="h-8 w-8"
             aria-label="New Question"
             onClick={getNewQuestion}
+            disabled={isGeneratingQuestion}
           >
-            <RefreshCcw className="w-4 h-4" />
+            {isGeneratingQuestion ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <RefreshCcw className="w-4 h-4" />
+            )}
           </Button>
         </div>
         <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 text-base italic cursor-pointer transition hover:bg-blue-50"
           onClick={() => setText(question)}>
-          {question}
+          {isGeneratingQuestion ? (
+            <div className="flex items-center gap-2 text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Generating new question...
+            </div>
+          ) : (
+            question
+          )}
         </div>
         <div className="text-xs text-gray-500 pl-1 mb-2">
           Click the question to insert it into the editor.
