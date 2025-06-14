@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, MessageSquare, Vocabulary, Grammar } from "lucide-react";
+import { BookOpen, MessageSquare, BookA, CheckCircle } from "lucide-react";
 
 interface DetailedAnalysisProps {
   explanation: string;
@@ -13,8 +13,8 @@ const DetailedAnalysis = ({ explanation }: DetailedAnalysisProps) => {
     const criteria = [
       { name: 'Task Response', icon: BookOpen, description: 'How well you address the task' },
       { name: 'Coherence', icon: MessageSquare, description: 'Organization and flow of ideas' },
-      { name: 'Lexical Resource', icon: Vocabulary, description: 'Vocabulary range and accuracy' },
-      { name: 'Grammar', icon: Grammar, description: 'Grammatical range and accuracy' }
+      { name: 'Lexical Resource', icon: BookA, description: 'Vocabulary range and accuracy' },
+      { name: 'Grammar', icon: CheckCircle, description: 'Grammatical range and accuracy' }
     ];
 
     // Try to extract scores from explanation

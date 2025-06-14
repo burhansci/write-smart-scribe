@@ -123,7 +123,7 @@ export const parseDeepSeekResponse = (response: string) => {
   }
   
   if (!markedErrors) {
-    markedErrors = text || 'No specific errors marked in this analysis.';
+    markedErrors = 'No specific errors marked in this analysis.';
   }
   
   if (!improvedText || improvedText.length < 50) {
