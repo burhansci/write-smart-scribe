@@ -1,11 +1,8 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Key, ExternalLink } from "lucide-react";
+import { Key, ExternalLink } from "lucide-react";
 
 interface ApiKeyInputProps {
   onApiKeySet: (apiKey: string) => void;
@@ -13,21 +10,13 @@ interface ApiKeyInputProps {
 }
 
 const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
-  const [apiKey, setApiKey] = useState(currentApiKey || '');
-  const [showApiKey, setShowApiKey] = useState(false);
+  // Use the hardcoded API key
+  const HARDCODED_API_KEY = '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';
 
-  const handleSubmit = () => {
-    if (apiKey.trim()) {
-      localStorage.setItem('openrouter_api_key', apiKey.trim());
-      onApiKeySet(apiKey.trim());
-    }
-  };
-
-  const clearApiKey = () => {
-    localStorage.removeItem('openrouter_api_key');
-    setApiKey('');
-    onApiKeySet('');
-  };
+  // Set the API key on component mount
+  useState(() => {
+    onApiKeySet(HARDCODED_API_KEY);
+  });
 
   return (
     <Card className="mb-6">
@@ -40,7 +29,7 @@ const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
       <CardContent className="space-y-4">
         <Alert>
           <AlertDescription>
-            To use AI analysis, you need an OpenRouter API key. Get yours at{' '}
+            OpenRouter API is configured and ready to use. Powered by{' '}
             <a 
               href="https://openrouter.ai/" 
               target="_blank" 
@@ -53,44 +42,9 @@ const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-2">
-          <Label htmlFor="api-key">OpenRouter API Key</Label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                id="api-key"
-                type={showApiKey ? "text" : "password"}
-                placeholder="sk-or-v1-..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3"
-                onClick={() => setShowApiKey(!showApiKey)}
-              >
-                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            </div>
-            <Button onClick={handleSubmit} disabled={!apiKey.trim()}>
-              Save
-            </Button>
-            {currentApiKey && (
-              <Button variant="outline" onClick={clearApiKey}>
-                Clear
-              </Button>
-            )}
-          </div>
+        <div className="text-sm text-green-600">
+          ✓ API key configured and ready to use
         </div>
-
-        {currentApiKey && (
-          <div className="text-sm text-green-600">
-            ✓ API key configured and ready to use
-          </div>
-        )}
       </CardContent>
     </Card>
   );

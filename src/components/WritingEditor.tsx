@@ -21,23 +21,14 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [apiKey, setApiKey] = useState('');
 
+  // Use the hardcoded API key
+  const HARDCODED_API_KEY = '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';
+
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('openrouter_api_key');
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-    }
+    setApiKey(HARDCODED_API_KEY);
   }, []);
 
   const analyzeWriting = async () => {
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please set your OpenRouter API key to analyze writing.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!text.trim()) {
       toast({
         title: "Error",
@@ -61,7 +52,7 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
     try {
       console.log('Starting OpenRouter analysis...');
       const messages = createDeepSeekPrompt(text, scoringSystem);
-      const response = await callDeepSeekAPI(messages, apiKey);
+      const response = await callDeepSeekAPI(messages, HARDCODED_API_KEY);
       console.log('OpenRouter response:', response);
       
       const parsedFeedback = parseDeepSeekResponse(response);
@@ -159,7 +150,7 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
           </p>
           <Button 
             onClick={analyzeWriting} 
-            disabled={isAnalyzing || wordCount < 1 || !apiKey}
+            disabled={isAnalyzing || wordCount < 1}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {isAnalyzing ? (
