@@ -1,24 +1,28 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, Plus, Minus, ArrowRight } from "lucide-react";
+import { Lightbulb, Plus, Minus, ArrowRight, FlipHorizontal } from "lucide-react";
 
 interface ImprovementSuggestionsProps {
+  originalText: string;
   improvedText: string;
 }
 
-const ImprovementSuggestions = ({ improvedText }: ImprovementSuggestionsProps) => {
+const ImprovementSuggestions = ({ originalText, improvedText }: ImprovementSuggestionsProps) => {
+  const [showImproved, setShowImproved] = useState(true);
+
   const parseImprovements = () => {
     const improvements = [];
-    
+
     // Parse additions: [+text+]
     const addMatches = [...improvedText.matchAll(/\[\+([^+\]]+)\+\]/g)];
     addMatches.forEach(match => {
       improvements.push({
-        type: 'addition',
+        type: "addition",
         text: match[1],
-        suggestion: 'Add this word/phrase to improve flow and clarity'
+        suggestion: "Add this word/phrase to improve flow and clarity",
       });
     });
 
@@ -26,9 +30,9 @@ const ImprovementSuggestions = ({ improvedText }: ImprovementSuggestionsProps) =
     const removeMatches = [...improvedText.matchAll(/\[~([^~\]]+)~\]/g)];
     removeMatches.forEach(match => {
       improvements.push({
-        type: 'removal',
+        type: "removal",
         text: match[1],
-        suggestion: 'Remove or replace this word for better expression'
+        suggestion: "Remove or replace this word for better expression",
       });
     });
 
@@ -36,9 +40,9 @@ const ImprovementSuggestions = ({ improvedText }: ImprovementSuggestionsProps) =
     const suggestionMatches = [...improvedText.matchAll(/\[\+([^+\]]+)\+\]\{([^}]+)\}/g)];
     suggestionMatches.forEach(match => {
       improvements.push({
-        type: 'suggestion',
+        type: "suggestion",
         text: match[1],
-        suggestion: match[2]
+        suggestion: match[2],
       });
     });
 
@@ -46,47 +50,64 @@ const ImprovementSuggestions = ({ improvedText }: ImprovementSuggestionsProps) =
   };
 
   const improvements = parseImprovements();
-  
+
   const renderImprovedText = () => {
     let processedText = improvedText;
-    
     // Replace improvement markers with styled spans
     processedText = processedText.replace(/\[\+([^+\]]+)\+\]/g, '<span class="bg-green-100 text-green-800 px-1 rounded font-medium">$1</span>');
     processedText = processedText.replace(/\[~([^~\]]+)~\]/g, '<span class="bg-red-100 text-red-800 line-through px-1 rounded">$1</span>');
     processedText = processedText.replace(/\[\+([^+\]]+)\+\]\{([^}]+)\}/g, '<span class="bg-green-100 text-green-800 px-1 rounded font-medium">$1</span>');
-    
     return <div className="text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: processedText }} />;
   };
 
+  const renderOriginalText = () => (
+    <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">{originalText}</div>
+  );
+
   return (
     <div className="space-y-4">
-      {/* Improved Text Display */}
+      {/* Toggle Button */}
+      <div className="flex items-center justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          className="mb-2"
+          onClick={() => setShowImproved((v) => !v)}
+        >
+          <FlipHorizontal className="w-4 h-4 mr-2" />
+          {showImproved ? "Show Original" : "Show Improved"}
+        </Button>
+      </div>
+
+      {/* Improved or Original Text Display */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lightbulb className="w-5 h-5 text-yellow-500" />
-            Improved Version
+            {showImproved ? "Improved Version" : "Original Version"}
           </CardTitle>
-          <div className="flex gap-2 text-sm">
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              <Plus className="w-3 h-3 mr-1" />
-              Added words
-            </Badge>
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              <Minus className="w-3 h-3 mr-1" />
-              Words to remove
-            </Badge>
-          </div>
+          {showImproved && (
+            <div className="flex gap-2 text-sm">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Plus className="w-3 h-3 mr-1" />
+                Added words
+              </Badge>
+              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                <Minus className="w-3 h-3 mr-1" />
+                Words to remove
+              </Badge>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
-          <div className="bg-gray-50 p-4 rounded-lg border">
-            {renderImprovedText()}
+          <div className={`${showImproved ? "bg-gray-50" : "bg-white"} p-4 rounded-lg border`}>
+            {showImproved ? renderImprovedText() : renderOriginalText()}
           </div>
         </CardContent>
       </Card>
 
       {/* Key Improvements List */}
-      {improvements.length > 0 && (
+      {showImproved && improvements.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Key Improvements</CardTitle>
@@ -96,9 +117,9 @@ const ImprovementSuggestions = ({ improvedText }: ImprovementSuggestionsProps) =
               {improvements.slice(0, 5).map((improvement, index) => (
                 <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
                   <div className="flex-shrink-0 mt-1">
-                    {improvement.type === 'addition' ? (
+                    {improvement.type === "addition" ? (
                       <Plus className="w-4 h-4 text-green-600" />
-                    ) : improvement.type === 'removal' ? (
+                    ) : improvement.type === "removal" ? (
                       <Minus className="w-4 h-4 text-red-600" />
                     ) : (
                       <ArrowRight className="w-4 h-4 text-blue-600" />
@@ -123,3 +144,4 @@ const ImprovementSuggestions = ({ improvedText }: ImprovementSuggestionsProps) =
 };
 
 export default ImprovementSuggestions;
+

@@ -174,7 +174,10 @@ ${submission.feedback?.improvedText}
         </TabsContent>
 
         <TabsContent value="improvements" className="space-y-4">
-          <ImprovementSuggestions improvedText={submission.feedback.improvedText} />
+          <ImprovementSuggestions
+            originalText={submission.text}
+            improvedText={submission.feedback.improvedText}
+          />
         </TabsContent>
 
         <TabsContent value="analysis" className="space-y-4">
