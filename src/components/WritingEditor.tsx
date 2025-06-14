@@ -9,7 +9,6 @@ import { Loader2, Send } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { WritingSubmission, AIFeedback } from "@/pages/Index";
 import { createDeepSeekPrompt, callDeepSeekAPI, parseDeepSeekResponse } from "@/lib/deepseek";
-import ApiKeyInput from "./ApiKeyInput";
 
 interface WritingEditorProps {
   onSubmissionComplete: (submission: WritingSubmission) => void;
@@ -19,14 +18,9 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
   const [text, setText] = useState('');
   const [scoringSystem, setScoringSystem] = useState<'IELTS' | 'GRE'>('IELTS');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [apiKey, setApiKey] = useState('');
 
   // Use the hardcoded API key
   const HARDCODED_API_KEY = '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';
-
-  useEffect(() => {
-    setApiKey(HARDCODED_API_KEY);
-  }, []);
 
   const analyzeWriting = async () => {
     if (!text.trim()) {
@@ -83,14 +77,14 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
       
       toast({
         title: "Analysis Complete!",
-        description: "Your writing has been analyzed via OpenRouter. Check the feedback tab.",
+        description: "Your writing has been analyzed. Check the feedback tab.",
       });
 
     } catch (error) {
       console.error('OpenRouter analysis error:', error);
       toast({
         title: "Analysis Error",
-        description: error instanceof Error ? error.message : "Failed to analyze your writing. Please check your API key and try again.",
+        description: error instanceof Error ? error.message : "Failed to analyze your writing. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -102,8 +96,6 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
 
   return (
     <div className="space-y-6">
-      <ApiKeyInput onApiKeySet={setApiKey} currentApiKey={apiKey} />
-      
       <CardHeader className="px-0 pt-0">
         <CardTitle className="flex items-center gap-2">
           <div className="p-2 bg-blue-100 rounded-lg">
@@ -156,7 +148,7 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
             {isAnalyzing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Analyzing via OpenRouter...
+                Analyzing...
               </>
             ) : (
               <>
