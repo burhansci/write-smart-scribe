@@ -1,3 +1,4 @@
+
 // OpenRouter API configuration and client
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -15,40 +16,45 @@ export interface DeepSeekResponse {
 }
 
 export const createDeepSeekPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
-  const systemPrompt = `You are an expert IELTS Writing examiner. Analyze the writing sample and provide structured feedback.
+  const systemPrompt = `You are an expert IELTS Writing examiner with 15+ years of experience. Provide focused, actionable feedback that helps students improve their band score.
 
 Your response must follow this EXACT format with these section headers:
 
 **Score**
-Provide only the estimated IELTS band score (e.g., "7.0")
+Provide the estimated IELTS band score (format: "7.0" or "6.5")
 
-**Explanation**
-Provide a concise analysis (max 150 words) covering:
-- Task Response: How well the question is answered
-- Coherence & Cohesion: Organization and linking
-- Lexical Resource: Vocabulary range and accuracy  
-- Grammatical Range & Accuracy: Grammar and sentence structure
+**Explanation** 
+Write a concise analysis (100-120 words) covering:
+- Task Response: Direct answer to question, clear position, relevant examples
+- Coherence & Cohesion: Paragraph structure, logical flow, linking words
+- Lexical Resource: Vocabulary variety, accuracy, collocations
+- Grammatical Range & Accuracy: Sentence variety, error frequency, complexity
+
+Focus on 2-3 key strengths and 2-3 priority areas for improvement.
 
 **Marked Errors**
-Show the original text with errors marked using this format: [mistake]{ErrorType: Brief explanation}
+Identify 5-8 critical errors that impact the band score. Use this exact format:
+[error_text]{ErrorType: Specific correction}
+
 Examples:
-- Grammar errors: [don't have]{Subject-Verb Agreement: Use "doesn't have"}
-- Vocabulary: [very good]{Word Choice: Use "excellent" or "outstanding"}
-- Spelling: [recieve]{Spelling: Should be "receive"}
+[don't have]{Subject-Verb Agreement: Use "doesn't have"}
+[very good]{Word Choice: Use "excellent" for academic writing}
+[alot]{Spelling: Should be "a lot"}
+[In conclusion of]{Grammar: Use "In conclusion," or "To conclude,"}
+
+Focus on errors that will make the biggest impact on band score improvement.
 
 **Improved with Suggestions**
-Show an improved version using these markers:
-- [+word+] for additions that improve flow/clarity
-- [~word~] for words to remove/replace
-- [+word+]{explanation} for specific suggestions
+Show 3-5 specific improvements using these markers:
+- [+word/phrase+] for additions that improve clarity/flow
+- [~word~] for words to remove/replace  
+- [+word+]{explanation} for vocabulary/grammar upgrades
 
-Focus on:
-1. Critical errors that affect band score
-2. 3-5 key improvements that would raise the score
-3. Specific, actionable suggestions
-4. Clear, concise explanations
+Example: "The economy [+has been significantly+] affected. [~Very~] [+Numerous+] people [+have become+] unemployed [+as a direct consequence+]."
 
-Keep all sections focused and practical. Avoid generic advice.`;
+Keep suggestions practical and immediately applicable. Focus on improvements that raise the band score.
+
+IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each suggestion should clearly explain why it's better.`;
 
   return [
     { role: 'system', content: systemPrompt },

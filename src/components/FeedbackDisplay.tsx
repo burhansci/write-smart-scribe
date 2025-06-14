@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, RefreshCw, BarChart3, AlertCircle, Lightbulb, FileText } from "lucide-react";
+import { Download, RefreshCw, BarChart3, AlertCircle, Lightbulb, FileText, Eye, EyeOff } from "lucide-react";
 import { WritingSubmission } from "@/pages/Index";
 import ScoreOverview from "@/components/feedback/ScoreOverview";
 import ErrorHighlighter from "@/components/feedback/ErrorHighlighter";
 import ImprovementSuggestions from "@/components/feedback/ImprovementSuggestions";
 import DetailedAnalysis from "@/components/feedback/DetailedAnalysis";
+import SideBySideComparison from "@/components/feedback/SideBySideComparison";
+import QuickInsights from "@/components/feedback/QuickInsights";
 
 interface FeedbackDisplayProps {
   submission: WritingSubmission;
@@ -17,6 +19,7 @@ interface FeedbackDisplayProps {
 
 const FeedbackDisplay = ({ submission, onNewWriting }: FeedbackDisplayProps) => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [showComparison, setShowComparison] = useState(false);
 
   const downloadFeedback = () => {
     const content = `
@@ -66,7 +69,7 @@ ${submission.feedback?.improvedText}
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Quick Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Writing Analysis</h2>
@@ -80,6 +83,14 @@ ${submission.feedback?.improvedText}
           )}
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowComparison(!showComparison)} 
+            size="sm"
+          >
+            {showComparison ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+            {showComparison ? 'Hide' : 'Show'} Comparison
+          </Button>
           <Button variant="outline" onClick={downloadFeedback} size="sm">
             <Download className="w-4 h-4 mr-2" />
             Download
@@ -91,7 +102,19 @@ ${submission.feedback?.improvedText}
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Quick Insights - Always Visible */}
+      <QuickInsights feedback={submission.feedback} />
+
+      {/* Side-by-Side Comparison - Toggle */}
+      {showComparison && (
+        <SideBySideComparison 
+          originalText={submission.text}
+          improvedText={submission.feedback.improvedText}
+          markedErrors={submission.feedback.markedErrors}
+        />
+      )}
+
+      {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview" className="flex items-center gap-2">

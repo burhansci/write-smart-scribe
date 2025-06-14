@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, EyeOff, ChevronDown, ChevronRight } from "lucide-react";
 
 interface ErrorHighlighterProps {
   originalText: string;
@@ -21,6 +22,7 @@ interface ParsedError {
 
 const ErrorHighlighter = ({ originalText, markedErrors }: ErrorHighlighterProps) => {
   const [showErrors, setShowErrors] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(['Grammar']);
 
   const parseErrors = (): ParsedError[] => {
     const errors: ParsedError[] = [];
@@ -45,121 +47,156 @@ const ErrorHighlighter = ({ originalText, markedErrors }: ErrorHighlighterProps)
 
   const errors = parseErrors();
   const errorsByType = errors.reduce((acc, error) => {
-    acc[error.type] = (acc[error.type] || 0) + 1;
+    if (!acc[error.type]) {
+      acc[error.type] = [];
+    }
+    acc[error.type].push(error);
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, ParsedError[]>);
+
+  const getErrorTypeColor = (type: string) => {
+    const colors = {
+      'Grammar': 'bg-red-100 text-red-800 border-red-200',
+      'Vocabulary': 'bg-orange-100 text-orange-800 border-orange-200',
+      'Spelling': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'Word Choice': 'bg-purple-100 text-purple-800 border-purple-200',
+      'Subject-Verb Agreement': 'bg-pink-100 text-pink-800 border-pink-200'
+    };
+    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  };
 
   const renderTextWithErrors = () => {
     if (!showErrors) {
       return <span className="text-gray-800 leading-relaxed">{originalText}</span>;
     }
 
-    let processedText = markedErrors;
-    const errorMatches = [...markedErrors.matchAll(/\[([^\]]+)\]\{([^:]+):\s*([^}]+)\}/g)];
+    let processedText = originalText;
+    const allMatches = [...markedErrors.matchAll(/\[([^\]]+)\]\{([^:]+):\s*([^}]+)\}/g)];
     
-    // Replace error markers with highlighted spans
-    errorMatches.reverse().forEach((match, index) => {
-      const [fullMatch, errorText, errorType, explanation] = match;
-      const replacement = (
-        <TooltipProvider key={index}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="bg-red-100 border-b-2 border-red-300 rounded px-1 cursor-help text-red-800 hover:bg-red-200 transition-colors">
-                {errorText}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <div className="space-y-1">
-                <div className="font-medium text-red-600">{errorType}</div>
-                <div className="text-sm">{explanation}</div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
+    // Sort matches by position in reverse order to avoid index shifting
+    const sortedMatches = allMatches
+      .map(match => ({
+        match,
+        index: originalText.indexOf(match[1])
+      }))
+      .filter(item => item.index !== -1)
+      .sort((a, b) => b.index - a.index);
+
+    sortedMatches.forEach(({ match }) => {
+      const [, errorText, errorType, explanation] = match;
+      const regex = new RegExp(`\\b${errorText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g');
       
-      processedText = processedText.replace(fullMatch, `<HIGHLIGHT_${index}>`);
+      processedText = processedText.replace(regex, (matched) => {
+        const colorClass = getErrorTypeColor(errorType.trim());
+        return `<span class="${colorClass} px-1 rounded border cursor-help" title="${errorType.trim()}: ${explanation.trim()}">${matched}</span>`;
+      });
     });
 
-    // Split by highlight markers and render
-    const parts = processedText.split(/<HIGHLIGHT_\d+>/);
-    const result = [];
-    
-    for (let i = 0; i < parts.length; i++) {
-      if (parts[i]) result.push(<span key={`text-${i}`}>{parts[i]}</span>);
-      if (i < errorMatches.length) {
-        const match = errorMatches[errorMatches.length - 1 - i];
-        const [, errorText, errorType, explanation] = match;
-        result.push(
-          <TooltipProvider key={`error-${i}`}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="bg-red-100 border-b-2 border-red-300 rounded px-1 cursor-help text-red-800 hover:bg-red-200 transition-colors">
-                  {errorText}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <div className="space-y-1">
-                  <div className="font-medium text-red-600">{errorType}</div>
-                  <div className="text-sm">{explanation}</div>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-    }
-    
-    return <div className="text-gray-800 leading-relaxed">{result}</div>;
+    return <div className="text-gray-800 leading-relaxed" dangerouslySetInnerHTML={{ __html: processedText }} />;
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-500" />
-            Error Analysis
-          </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowErrors(!showErrors)}
-            className="flex items-center gap-2"
-          >
-            {showErrors ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            {showErrors ? 'Hide' : 'Show'} Errors
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Error Summary */}
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(errorsByType).map(([type, count]) => (
-            <Badge key={type} variant="outline" className="text-red-600 border-red-200">
-              {type}: {count}
-            </Badge>
-          ))}
-          {errors.length === 0 && (
-            <div className="flex items-center gap-2 text-green-600">
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="text-sm">No errors detected</span>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              Error Analysis ({errors.length} errors found)
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowErrors(!showErrors)}
+              className="flex items-center gap-2"
+            >
+              {showErrors ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showErrors ? 'Hide' : 'Show'} Highlighting
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Error Summary */}
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(errorsByType).map(([type, typeErrors]) => (
+              <Badge key={type} variant="outline" className={getErrorTypeColor(type)}>
+                {type}: {typeErrors.length}
+              </Badge>
+            ))}
+            {errors.length === 0 && (
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="text-sm">No errors detected</span>
+              </div>
+            )}
+          </div>
+
+          {/* Text with highlighting */}
+          <div className="bg-gray-50 p-4 rounded-lg border">
+            {renderTextWithErrors()}
+          </div>
+
+          {showErrors && errors.length > 0 && (
+            <div className="text-xs text-gray-500">
+              Hover over highlighted text to see explanations
             </div>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Text with highlighting */}
-        <div className="bg-gray-50 p-4 rounded-lg border">
-          {renderTextWithErrors()}
-        </div>
-
-        {showErrors && errors.length > 0 && (
-          <div className="text-xs text-gray-500">
-            Hover over highlighted text to see explanations
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {/* Error Categories */}
+      {Object.keys(errorsByType).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Error Categories</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {Object.entries(errorsByType).map(([type, typeErrors]) => (
+              <Collapsible 
+                key={type}
+                open={expandedCategories.includes(type)}
+                onOpenChange={() => toggleCategory(type)}
+              >
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" className="w-full justify-between p-3 h-auto">
+                    <div className="flex items-center gap-3">
+                      {expandedCategories.includes(type) ? 
+                        <ChevronDown className="w-4 h-4" /> : 
+                        <ChevronRight className="w-4 h-4" />
+                      }
+                      <span className="font-medium">{type}</span>
+                      <Badge variant="outline" className={getErrorTypeColor(type)}>
+                        {typeErrors.length}
+                      </Badge>
+                    </div>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2 pl-7">
+                  {typeErrors.map((error, index) => (
+                    <div key={index} className="bg-gray-50 p-3 rounded-lg border">
+                      <div className="flex items-start gap-2">
+                        <span className={`px-2 py-1 rounded text-sm font-medium ${getErrorTypeColor(type)}`}>
+                          "{error.text}"
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2">{error.explanation}</p>
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
