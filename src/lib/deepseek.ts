@@ -1,6 +1,6 @@
 
-// DeepSeek API configuration and client
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+// OpenRouter API configuration and client
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export interface DeepSeekMessage {
   role: 'system' | 'user' | 'assistant';
@@ -52,14 +52,16 @@ Return your answer in 4 sections:
 };
 
 export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: string): Promise<string> => {
-  const response = await fetch(DEEPSEEK_API_URL, {
+  const response = await fetch(OPENROUTER_API_URL, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
+      'HTTP-Referer': window.location.origin,
+      'X-Title': 'AI Writing Coach',
     },
     body: JSON.stringify({
-      model: 'deepseek-chat',
+      model: 'deepseek/deepseek-chat',
       messages,
       temperature: 0.3,
       max_tokens: 2000,
@@ -67,7 +69,8 @@ export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: strin
   });
 
   if (!response.ok) {
-    throw new Error(`DeepSeek API error: ${response.status} ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   const data: DeepSeekResponse = await response.json();

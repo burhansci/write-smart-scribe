@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +22,7 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
   const [apiKey, setApiKey] = useState('');
 
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('deepseek_api_key');
+    const savedApiKey = localStorage.getItem('openrouter_api_key');
     if (savedApiKey) {
       setApiKey(savedApiKey);
     }
@@ -31,7 +32,7 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
     if (!apiKey) {
       toast({
         title: "API Key Required",
-        description: "Please set your DeepSeek API key to analyze writing.",
+        description: "Please set your OpenRouter API key to analyze writing.",
         variant: "destructive",
       });
       return;
@@ -58,10 +59,10 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
     setIsAnalyzing(true);
 
     try {
-      console.log('Starting DeepSeek analysis...');
+      console.log('Starting OpenRouter analysis...');
       const messages = createDeepSeekPrompt(text, scoringSystem);
       const response = await callDeepSeekAPI(messages, apiKey);
-      console.log('DeepSeek response:', response);
+      console.log('OpenRouter response:', response);
       
       const parsedFeedback = parseDeepSeekResponse(response);
       console.log('Parsed feedback:', parsedFeedback);
@@ -91,11 +92,11 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
       
       toast({
         title: "Analysis Complete!",
-        description: "Your writing has been analyzed by DeepSeek-V1. Check the feedback tab.",
+        description: "Your writing has been analyzed via OpenRouter. Check the feedback tab.",
       });
 
     } catch (error) {
-      console.error('DeepSeek analysis error:', error);
+      console.error('OpenRouter analysis error:', error);
       toast({
         title: "Analysis Error",
         description: error instanceof Error ? error.message : "Failed to analyze your writing. Please check your API key and try again.",
@@ -164,7 +165,7 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
             {isAnalyzing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Analyzing with DeepSeek...
+                Analyzing via OpenRouter...
               </>
             ) : (
               <>

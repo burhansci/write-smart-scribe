@@ -18,13 +18,13 @@ const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
 
   const handleSubmit = () => {
     if (apiKey.trim()) {
-      localStorage.setItem('deepseek_api_key', apiKey.trim());
+      localStorage.setItem('openrouter_api_key', apiKey.trim());
       onApiKeySet(apiKey.trim());
     }
   };
 
   const clearApiKey = () => {
-    localStorage.removeItem('deepseek_api_key');
+    localStorage.removeItem('openrouter_api_key');
     setApiKey('');
     onApiKeySet('');
   };
@@ -34,33 +34,33 @@ const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Key className="w-5 h-5" />
-          DeepSeek API Configuration
+          OpenRouter API Configuration
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <AlertDescription>
-            To use AI analysis, you need a DeepSeek API key. Get yours at{' '}
+            To use AI analysis, you need an OpenRouter API key. Get yours at{' '}
             <a 
-              href="https://platform.deepseek.com/" 
+              href="https://openrouter.ai/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline inline-flex items-center gap-1"
             >
-              platform.deepseek.com
+              openrouter.ai
               <ExternalLink className="w-3 h-3" />
             </a>
           </AlertDescription>
         </Alert>
 
         <div className="space-y-2">
-          <Label htmlFor="api-key">DeepSeek API Key</Label>
+          <Label htmlFor="api-key">OpenRouter API Key</Label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Input
                 id="api-key"
                 type={showApiKey ? "text" : "password"}
-                placeholder="sk-..."
+                placeholder="sk-or-v1-..."
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 className="pr-10"
