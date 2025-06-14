@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,7 +30,7 @@ const GRE_ISSUE_PROMPTS: string[] = [
 ];
 
 const GRE_ARGUMENT_PROMPTS: string[] = [
-  "The following appeared as part of a letter to the editor of a scientific journal: ‘A recent study of eighteen rhesus monkeys provides evidence that vision is improved when daily supplements of beta-carotene are included in their diets. Based on this study, it seems clear that people who include foods high in beta-carotene, such as carrots, in their diets will have better vision.' Evaluate the argument and discuss how well reasoned you find it.",
+  "The following appeared as part of a letter to the editor of a scientific journal: 'A recent study of eighteen rhesus monkeys provides evidence that vision is improved when daily supplements of beta-carotene are included in their diets. Based on this study, it seems clear that people who include foods high in beta-carotene, such as carrots, in their diets will have better vision.' Evaluate the argument and discuss how well reasoned you find it.",
   "The following appeared in a memorandum from the business department of the Apogee Company: 'A recent review of Apogee’s customer service policies has led to the recommendation that all Apogee employees undergo training in customer relations. The Apogee Company is facing increased competition, and this training will help maintain our reputation for excellent service.' Evaluate the argument and discuss how well reasoned you find it.",
   "The following appeared in a memorandum from the manager of WWAC Radio Station: ‘WWAC must change from rock-and-roll to continuous news if it is to attract more listeners and remain financially viable.' Evaluate the argument and discuss how well reasoned you find it.",
   "The following appeared as part of an article in a magazine devoted to regional lifestyles: 'Since many people enjoy recreational activities such as fishing and camping, we should build new parks to boost local tourism and the economy.' Evaluate the argument and discuss how well reasoned you find it.",
@@ -53,36 +52,67 @@ const getPromptList = (writingType: WritingType): string[] => {
   }
 };
 
-const getRandomPrompt = (writingType: WritingType): string => {
-  const prompts = getPromptList(writingType);
-  return prompts[Math.floor(Math.random() * prompts.length)];
+// Function to get next unique question
+const getNextUniquePrompt = (writingType: WritingType): string => {
+  const storageKey = `usedPrompts_${writingType}`;
+  const allPrompts = getPromptList(writingType);
+  const usedPrompts = JSON.parse(localStorage.getItem(storageKey) || '[]');
+  
+  // If all prompts have been used, reset the used prompts list
+  if (usedPrompts.length >= allPrompts.length) {
+    localStorage.setItem(storageKey, '[]');
+    const firstPrompt = allPrompts[0];
+    localStorage.setItem(storageKey, JSON.stringify([firstPrompt]));
+    return firstPrompt;
+  }
+  
+  // Find unused prompts
+  const unusedPrompts = allPrompts.filter(prompt => !usedPrompts.includes(prompt));
+  
+  // Get random unused prompt
+  const selectedPrompt = unusedPrompts[Math.floor(Math.random() * unusedPrompts.length)];
+  
+  // Add to used prompts
+  const updatedUsedPrompts = [...usedPrompts, selectedPrompt];
+  localStorage.setItem(storageKey, JSON.stringify(updatedUsedPrompts));
+  
+  return selectedPrompt;
 };
 
 const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
   const [text, setText] = useState('');
   const [scoringSystem, setScoringSystem] = useState<ScoringSystem>('IELTS');
   const [writingType, setWritingType] = useState<WritingType>(getDefaultWritingType('IELTS'));
-  const [question, setQuestion] = useState<string>(getRandomPrompt('IELTS_TASK_2'));
+  const [question, setQuestion] = useState<string>('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Use the hardcoded API key
   const HARDCODED_API_KEY = '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';
 
+  // Initialize question on first load
+  useEffect(() => {
+    setQuestion(getNextUniquePrompt('IELTS_TASK_2'));
+  }, []);
+
   // Reset type and question when scoring system changes
   useEffect(() => {
     if (scoringSystem === 'IELTS') {
       setWritingType('IELTS_TASK_2');
-      setQuestion(getRandomPrompt('IELTS_TASK_2'));
+      setQuestion(getNextUniquePrompt('IELTS_TASK_2'));
     } else {
       setWritingType('GRE_ISSUE');
-      setQuestion(getRandomPrompt('GRE_ISSUE'));
+      setQuestion(getNextUniquePrompt('GRE_ISSUE'));
     }
   }, [scoringSystem]);
 
   // Reset question if writing type changes
   useEffect(() => {
-    setQuestion(getRandomPrompt(writingType));
+    setQuestion(getNextUniquePrompt(writingType));
   }, [writingType]);
+
+  const getNewQuestion = () => {
+    setQuestion(getNextUniquePrompt(writingType));
+  };
 
   const analyzeWriting = async () => {
     if (!text.trim()) {
@@ -208,7 +238,7 @@ const WritingEditor = ({ onSubmissionComplete }: WritingEditorProps) => {
             size="icon"
             className="h-8 w-8"
             aria-label="New Question"
-            onClick={() => setQuestion(getRandomPrompt(writingType))}
+            onClick={getNewQuestion}
           >
             <RefreshCcw className="w-4 h-4" />
           </Button>
