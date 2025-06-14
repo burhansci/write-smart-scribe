@@ -1,4 +1,3 @@
-
 // OpenRouter API configuration and client
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -78,7 +77,11 @@ export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: strin
 };
 
 export const parseDeepSeekResponse = (response: string) => {
-  const sections = response.split('**').filter(section => section.trim());
+  console.log('Full response to parse:', response);
+  
+  // Split by double asterisks to find sections
+  const sections = response.split('**').map(s => s.trim()).filter(s => s.length > 0);
+  console.log('Split sections:', sections);
   
   let score = '';
   let explanation = '';
@@ -86,19 +89,40 @@ export const parseDeepSeekResponse = (response: string) => {
   let improvedText = '';
 
   for (let i = 0; i < sections.length; i++) {
-    const section = sections[i].toLowerCase();
-    const content = sections[i + 1] || '';
+    const sectionHeader = sections[i].toLowerCase();
+    const sectionContent = sections[i + 1] || '';
     
-    if (section.includes('score')) {
-      score = content.trim();
-    } else if (section.includes('explanation')) {
-      explanation = content.trim();
-    } else if (section.includes('marked errors')) {
-      markedErrors = content.trim();
-    } else if (section.includes('improved') || section.includes('suggestions')) {
-      improvedText = content.trim();
+    console.log(`Checking section: "${sectionHeader}" with content: "${sectionContent.substring(0, 100)}..."`);
+    
+    if (sectionHeader.includes('score')) {
+      // Look for the actual score in the content
+      const scoreMatch = sectionContent.match(/(?:estimated\s+)?(?:ielts\s+band\s+score|gre\s+awa\s+score):\s*([0-9.]+)/i);
+      if (scoreMatch) {
+        score = scoreMatch[1];
+      } else {
+        // Fallback: extract first line that contains a number
+        const lines = sectionContent.split('\n').filter(line => line.trim());
+        for (const line of lines) {
+          const numberMatch = line.match(/([0-9.]+)/);
+          if (numberMatch) {
+            score = numberMatch[1];
+            break;
+          }
+        }
+      }
+      if (!score) {
+        score = sectionContent.trim();
+      }
+    } else if (sectionHeader.includes('explanation')) {
+      explanation = sectionContent.trim();
+    } else if (sectionHeader.includes('marked') && sectionHeader.includes('error')) {
+      markedErrors = sectionContent.trim();
+    } else if (sectionHeader.includes('improved') || sectionHeader.includes('suggestions')) {
+      improvedText = sectionContent.trim();
     }
   }
+
+  console.log('Parsed results:', { score, explanation: explanation.substring(0, 100), markedErrors: markedErrors.substring(0, 100), improvedText: improvedText.substring(0, 100) });
 
   return {
     score: score || 'Score not provided',
