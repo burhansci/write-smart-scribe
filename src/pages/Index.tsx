@@ -12,7 +12,7 @@ import SamplePrompts from "@/components/SamplePrompts";
 export interface WritingSubmission {
   id: string;
   text: string;
-  scoringSystem: 'IELTS' | 'GRE';
+  scoringSystem: 'IELTS';
   timestamp: Date;
   feedback?: AIFeedback;
 }
@@ -46,7 +46,7 @@ const Index = () => {
             AI Writing Coach
           </h1>
           <p className="text-xl text-gray-600">
-            Improve your writing with AI-powered IELTS & GRE scoring
+            Improve your IELTS writing with AI-powered scoring
           </p>
         </header>
 
