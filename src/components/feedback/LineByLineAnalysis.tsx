@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { List, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Lightbulb, ArrowRight } from "lucide-react";
+import { List, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Lightbulb, Target } from "lucide-react";
 
 interface LineByLineAnalysisProps {
   originalText: string;
@@ -27,7 +27,7 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
     const lines: LineAnalysis[] = [];
     const sentences = originalText.split(/[.!?]+/).filter(s => s.trim().length > 0);
     
-    // Enhanced parsing for more detailed AI response
+    // Parse the AI response for line-by-line feedback
     const lineMatches = [...lineByLineAnalysis.matchAll(/Line (\d+):\s*"([^"]+)"\s*Issues:\s*([^\n]+)\s*Suggestions:\s*([^\n]+)\s*Priority:\s*(\w+)/g)];
     
     sentences.forEach((sentence, index) => {
@@ -39,8 +39,8 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
         lines.push({
           lineNumber,
           sentence: sentence.trim(),
-          issues: issues.split(',').map(i => i.trim()).filter(i => i.length > 0),
-          suggestions: suggestions.split(',').map(s => s.trim()).filter(s => s.length > 0),
+          issues: issues.split(',').map(i => i.trim()),
+          suggestions: suggestions.split(',').map(s => s.trim()),
           priority: priority as 'High' | 'Medium' | 'Low',
           categories: extractCategories(issues)
         });
@@ -65,11 +65,11 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
     const issuesLower = issues.toLowerCase();
     
     if (issuesLower.includes('vocabulary') || issuesLower.includes('word choice')) categories.push('Vocabulary');
-    if (issuesLower.includes('grammar') || issuesLower.includes('tense') || issuesLower.includes('subject-verb') || issuesLower.includes('agreement')) categories.push('Grammar');
+    if (issuesLower.includes('grammar') || issuesLower.includes('tense')) categories.push('Grammar');
     if (issuesLower.includes('spelling')) categories.push('Spelling');
-    if (issuesLower.includes('punctuation') || issuesLower.includes('comma') || issuesLower.includes('period')) categories.push('Punctuation');
-    if (issuesLower.includes('phrasing') || issuesLower.includes('clarity') || issuesLower.includes('run-on') || issuesLower.includes('sentence')) categories.push('Phrasing');
-    if (issuesLower.includes('style') || issuesLower.includes('tone') || issuesLower.includes('formal') || issuesLower.includes('academic')) categories.push('Style');
+    if (issuesLower.includes('punctuation')) categories.push('Punctuation');
+    if (issuesLower.includes('phrasing') || issuesLower.includes('clarity')) categories.push('Phrasing');
+    if (issuesLower.includes('style') || issuesLower.includes('tone')) categories.push('Style');
     
     return categories;
   };
@@ -186,43 +186,37 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
             
             <CollapsibleContent className="pl-7 pr-3 pb-3 space-y-3">
               {line.issues.length > 0 && (
-                <div className="bg-red-50 p-4 rounded-lg border border-red-100">
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                  <div className="flex items-center gap-2 mb-2">
                     <AlertCircle className="w-4 h-4 text-red-600" />
-                    <span className="font-medium text-red-800">Specific Issues Found</span>
+                    <span className="font-medium text-red-800">Issues Found</span>
                   </div>
-                  <div className="space-y-2">
+                  <ul className="space-y-1">
                     {line.issues.map((issue, idx) => (
-                      <div key={idx} className="flex items-start gap-2 p-2 bg-white rounded border">
-                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                        <div className="text-sm text-red-700">{issue}</div>
-                      </div>
+                      <li key={idx} className="text-sm text-red-700">• {issue}</li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
               
               {line.suggestions.length > 0 && (
-                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                  <div className="flex items-center gap-2 mb-2">
                     <Lightbulb className="w-4 h-4 text-green-600" />
-                    <span className="font-medium text-green-800">Specific Improvements</span>
+                    <span className="font-medium text-green-800">Suggestions</span>
                   </div>
-                  <div className="space-y-2">
+                  <ul className="space-y-1">
                     {line.suggestions.map((suggestion, idx) => (
-                      <div key={idx} className="flex items-start gap-2 p-2 bg-white rounded border">
-                        <ArrowRight className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <div className="text-sm text-green-700">{suggestion}</div>
-                      </div>
+                      <li key={idx} className="text-sm text-green-700">• {suggestion}</li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
               
               {line.issues.length === 0 && line.suggestions.length === 0 && (
                 <div className="bg-green-50 p-3 rounded-lg border border-green-100 text-center">
                   <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                  <span className="text-sm text-green-700">This sentence looks excellent!</span>
+                  <span className="text-sm text-green-700">This sentence looks good!</span>
                 </div>
               )}
             </CollapsibleContent>
