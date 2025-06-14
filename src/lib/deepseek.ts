@@ -1,4 +1,3 @@
-
 // OpenRouter API configuration and client
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -33,19 +32,21 @@ Write a concise analysis (100-120 words) covering:
 Focus on 2-3 key strengths and 2-3 priority areas for improvement.
 
 **Line-by-Line Analysis**
-Analyze each sentence individually. For each sentence, provide detailed feedback on:
-- Vocabulary: Word choice, academic level, collocations
-- Grammar: Tense, agreement, articles, sentence structure
-- Spelling: Typos, consistency (British/American)
-- Punctuation: Commas, periods, apostrophes, semicolons
-- Phrasing: Clarity, conciseness, natural flow
-- Style: Formal/informal tone, academic conventions
+Analyze each sentence individually with SPECIFIC, DETAILED feedback. For each sentence, identify exact errors and provide precise solutions.
 
 Format each line as:
 Line [number]: "[original sentence]"
-Issues: [List specific problems with categories]
-Suggestions: [Specific improvements]
+Issues: [List SPECIFIC problems with exact words/phrases that need fixing]
+Suggestions: [Provide PRECISE corrections with explanations of WHY each change improves the writing]
 Priority: [High/Medium/Low based on band score impact]
+
+IMPORTANT: Be extremely specific in your feedback. Instead of saying "grammar error", say "Subject-verb disagreement: 'students is' should be 'students are'". Instead of "word choice issue", say "Replace 'very good' with 'excellent' for more academic vocabulary".
+
+Examples of good feedback:
+- Issues: Subject-verb disagreement ("The data show" should be "The data shows"), Informal language ("kids" should be "children" in academic writing)
+- Suggestions: Change "show" to "shows" for singular subject agreement, Replace "kids" with "children" for formal academic tone
+- Issues: Run-on sentence (needs punctuation after "However"), Weak vocabulary ("big problem" is too informal)
+- Suggestions: Add comma after "However" to separate clauses, Replace "big problem" with "significant issue" for academic precision
 
 **Marked Errors**
 Identify 5-8 critical errors that impact the band score. Use this exact format:
