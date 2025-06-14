@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Eye, Calendar } from "lucide-react";
+import { Trash2, Eye, Calendar, HelpCircle } from "lucide-react";
 import { WritingSubmission } from "@/pages/Index";
 
 interface WritingHistoryProps {
@@ -71,6 +71,14 @@ const WritingHistory = ({ onSelectSubmission }: WritingHistoryProps) => {
                   <p className="text-sm text-gray-500">
                     {submission.timestamp.toLocaleDateString()} at {submission.timestamp.toLocaleTimeString()}
                   </p>
+                  {submission.question && (
+                    <div className="mt-2 flex items-start gap-2">
+                      <HelpCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-blue-700 italic line-clamp-2">
+                        {submission.question}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button

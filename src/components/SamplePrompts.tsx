@@ -1,8 +1,9 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Copy, ExternalLink, Search } from "lucide-react";
+import { BookOpen, Copy, ExternalLink, Search, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 
@@ -946,8 +947,27 @@ const samplePrompts = [
 const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
   const [filter, setFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [usedQuestions, setUsedQuestions] = useState<string[]>([]);
 
   const categories = ['ALL', 'Education', 'Environment', 'Technology', 'Media', 'Advertisement', 'Children', 'Young People', 'Old People', 'Social Issues', 'Family', 'Culture', 'Drugs', 'Health', 'Foreign Language', 'Ethical Issues', 'Building', 'Lifestyle', 'Others'];
+
+  // Load used questions from localStorage
+  useEffect(() => {
+    const loadUsedQuestions = () => {
+      const used = JSON.parse(localStorage.getItem('usedQuestions') || '[]');
+      setUsedQuestions(used);
+    };
+
+    loadUsedQuestions();
+
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      loadUsedQuestions();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const filteredPrompts = samplePrompts.filter(prompt => {
     const matchesCategory = filter === 'ALL' || prompt.category === filter;
@@ -962,7 +982,7 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
     navigator.clipboard.writeText(prompt);
     toast({
       title: "Copied!",
-      description: "Prompt copied to clipboard. Go to the Write tab to start.",
+      description: "Prompt copied to clipboard.",
     });
   };
 
@@ -970,18 +990,22 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
     localStorage.setItem('selectedPrompt', prompt);
     onSelectPrompt();
     toast({
-      title: "Prompt Selected",
-      description: "Switch to the Write tab to start writing with this prompt.",
+      title: "Question Selected",
+      description: "Question has been selected. Start writing your essay!",
     });
+  };
+
+  const isQuestionUsed = (question: string) => {
+    return usedQuestions.includes(question);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">IELTS Writing Prompts</h2>
+          <h2 className="text-2xl font-bold text-gray-900">IELTS Writing Questions</h2>
           <div className="text-sm text-gray-500">
-            {filteredPrompts.length} prompts available
+            {filteredPrompts.length} questions available • {usedQuestions.length} completed
           </div>
         </div>
         
@@ -989,7 +1013,7 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Search prompts by title, content, or category..."
+              placeholder="Search questions by title, content, or category..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -1013,55 +1037,65 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
       </div>
 
       <div className="grid gap-4">
-        {filteredPrompts.map((prompt) => (
-          <Card key={prompt.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <CardTitle className="text-lg mb-2">
-                    <Badge variant="default" className="mr-2">
-                      {prompt.category}
-                    </Badge>
-                    {prompt.title}
-                  </CardTitle>
-                  <div className="flex gap-4 text-sm text-gray-500">
-                    <span>⏰ {prompt.timeLimit}</span>
-                    <span>📝 {prompt.wordCount}</span>
+        {filteredPrompts.map((prompt) => {
+          const isUsed = isQuestionUsed(prompt.prompt);
+          
+          return (
+            <Card key={prompt.id} className={`hover:shadow-md transition-shadow ${isUsed ? 'bg-green-50 border-green-200' : ''}`}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg mb-2 flex items-center gap-2">
+                      <Badge variant="default" className="mr-2">
+                        {prompt.category}
+                      </Badge>
+                      {prompt.title}
+                      {isUsed && (
+                        <div className="flex items-center gap-1 text-green-600">
+                          <Check className="w-4 h-4" />
+                          <span className="text-xs font-normal">Completed</span>
+                        </div>
+                      )}
+                    </CardTitle>
+                    <div className="flex gap-4 text-sm text-gray-500">
+                      <span>⏰ {prompt.timeLimit}</span>
+                      <span>📝 {prompt.wordCount}</span>
+                    </div>
                   </div>
+                  <BookOpen className="w-5 h-5 text-gray-400" />
                 </div>
-                <BookOpen className="w-5 h-5 text-gray-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <p className="text-gray-700 leading-relaxed">
-                  {prompt.prompt}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="default"
-                  onClick={() => usePrompt(prompt.prompt)}
-                  className="flex-1"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Use This Prompt
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => copyPrompt(prompt.prompt)}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <p className="text-gray-700 leading-relaxed">
+                    {prompt.prompt}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant={isUsed ? "outline" : "default"}
+                    onClick={() => usePrompt(prompt.prompt)}
+                    className="flex-1"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    {isUsed ? "Practice Again" : "Use This Question"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => copyPrompt(prompt.prompt)}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {filteredPrompts.length === 0 && (
         <div className="text-center py-8">
-          <p className="text-gray-500 mb-4">No prompts found matching your search.</p>
+          <p className="text-gray-500 mb-4">No questions found matching your search.</p>
           <Button onClick={() => { setSearchTerm(''); setFilter('ALL'); }}>
             Clear Filters
           </Button>
@@ -1069,8 +1103,8 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
       )}
 
       <div className="text-center text-sm text-gray-500 mt-8">
-        <p>Practice with these IELTS prompts to improve your writing skills.</p>
-        <p>Remember to time yourself for realistic test conditions!</p>
+        <p>Practice with these IELTS questions to improve your writing skills.</p>
+        <p>Questions you've completed will be marked with a green checkmark!</p>
       </div>
     </div>
   );

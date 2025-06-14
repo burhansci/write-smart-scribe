@@ -15,6 +15,7 @@ export interface WritingSubmission {
   scoringSystem: 'IELTS';
   timestamp: Date;
   feedback?: AIFeedback;
+  question?: string;
 }
 
 export interface AIFeedback {
@@ -35,6 +36,14 @@ const Index = () => {
 
   const handleNewWriting = () => {
     setCurrentSubmission(null);
+    setActiveTab("write");
+  };
+
+  const handleChooseQuestion = () => {
+    setActiveTab("samples");
+  };
+
+  const handleQuestionSelected = () => {
     setActiveTab("write");
   };
 
@@ -66,13 +75,16 @@ const Index = () => {
             </TabsTrigger>
             <TabsTrigger value="samples" className="flex items-center gap-2">
               <BookOpen className="w-4 h-4" />
-              Samples
+              Questions
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="write">
             <Card className="p-6">
-              <WritingEditor onSubmissionComplete={handleSubmissionComplete} />
+              <WritingEditor 
+                onSubmissionComplete={handleSubmissionComplete} 
+                onChooseQuestion={handleChooseQuestion}
+              />
             </Card>
           </TabsContent>
 
@@ -100,7 +112,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="samples">
-            <SamplePrompts onSelectPrompt={() => setActiveTab("write")} />
+            <SamplePrompts onSelectPrompt={handleQuestionSelected} />
           </TabsContent>
         </Tabs>
       </div>
