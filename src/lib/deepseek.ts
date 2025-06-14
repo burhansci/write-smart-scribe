@@ -33,19 +33,35 @@ Write a concise analysis (100-120 words) covering:
 Focus on 2-3 key strengths and 2-3 priority areas for improvement.
 
 **Line-by-Line Analysis**
-Analyze each sentence individually. For each sentence, provide detailed feedback on:
-- Vocabulary: Word choice, academic level, collocations
-- Grammar: Tense, agreement, articles, sentence structure
-- Spelling: Typos, consistency (British/American)
-- Punctuation: Commas, periods, apostrophes, semicolons
-- Phrasing: Clarity, conciseness, natural flow
-- Style: Formal/informal tone, academic conventions
+Analyze each sentence individually with DETAILED, SPECIFIC feedback. For each sentence, identify:
+- EXACT words/phrases that need improvement (not just categories)
+- SPECIFIC error types with clear explanations
+- PRECISE suggestions with reasons why they're better
+- Academic writing improvements
 
 Format each line as:
-Line [number]: "[original sentence]"
-Issues: [List specific problems with categories]
-Suggestions: [Specific improvements]
+Line [number]: "[complete original sentence]"
+Specific Issues:
+• [Error Type]: "[exact problematic phrase]" → Issue: [detailed explanation of why it's wrong]
+• [Error Type]: "[exact problematic phrase]" → Issue: [detailed explanation of why it's wrong]
+Specific Suggestions:
+• Replace "[exact original phrase]" with "[suggested improvement]" → Reason: [why this is better for IELTS]
+• Change "[exact original phrase]" to "[suggested improvement]" → Reason: [academic writing improvement]
 Priority: [High/Medium/Low based on band score impact]
+
+Example format:
+Line 1: "The students is studying very hard for they exam."
+Specific Issues:
+• Grammar: "students is" → Issue: Subject-verb disagreement (plural subject needs plural verb)
+• Spelling: "they exam" → Issue: Incorrect pronoun usage (should be possessive "their")
+• Word Choice: "very hard" → Issue: Too informal for academic writing
+Specific Suggestions:
+• Replace "students is" with "students are" → Reason: Correct subject-verb agreement improves grammatical accuracy
+• Change "they exam" to "their examination" → Reason: Correct possessive form and more formal vocabulary
+• Replace "very hard" with "diligently" → Reason: More sophisticated vocabulary for higher band score
+Priority: High
+
+Be extremely specific - identify exact words, phrases, and provide detailed explanations for each issue.
 
 **Marked Errors**
 Identify 5-8 critical errors that impact the band score. Use this exact format:
