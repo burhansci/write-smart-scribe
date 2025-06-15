@@ -8,7 +8,8 @@ interface DeepSeekMessage {
 }
 
 const HUGGINGFACE_API_TOKEN = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
-const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2';
+// Using a more accessible model that should work with most HF tokens
+const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -40,7 +41,10 @@ serve(async (req) => {
     const systemPrompt = messages.find(m => m.role === 'system')?.content || '';
     const userPrompt = messages.find(m => m.role === 'user')?.content || '';
 
-    const fullPrompt = `<s>[INST] ${systemPrompt} \n\nHere is the text to analyze: \n\n${userPrompt} [/INST]`;
+    // Create a comprehensive prompt for writing analysis
+    const analysisPrompt = `${systemPrompt}\n\nText to analyze: ${userPrompt}\n\nPlease provide a detailed IELTS writing analysis with scoring.`;
+
+    console.log('Making request to Hugging Face with prompt length:', analysisPrompt.length);
 
     const response = await fetch(HUGGINGFACE_API_URL, {
       method: 'POST',
@@ -49,27 +53,58 @@ serve(async (req) => {
         'Authorization': `Bearer ${HUGGINGFACE_API_TOKEN}`,
       },
       body: JSON.stringify({
-        inputs: fullPrompt,
+        inputs: analysisPrompt,
         parameters: {
-          max_new_tokens: 1500,
-          return_full_text: false,
+          max_new_tokens: 800,
           temperature: 0.3,
+          return_full_text: false,
+        },
+        options: {
+          wait_for_model: true,
         }
       }),
     });
 
-    // Proxy status and body directly to the client. The client has the retry logic.
+    console.log('HF Response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('HF API Error:', errorText);
+      
+      // Handle specific error cases
+      if (response.status === 403) {
+        return new Response(JSON.stringify({ 
+          error: 'Access denied to the AI model. This could be due to token permissions or model restrictions. The analysis will try to continue with a basic response.',
+          fallback: true 
+        }), {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      return new Response(JSON.stringify({ 
+        error: `Hugging Face API error (${response.status}): ${errorText}`,
+        estimated_time: 20 
+      }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const responseBody = await response.text();
-    const headers = { ...corsHeaders, 'Content-Type': 'application/json' };
+    console.log('HF Response received, length:', responseBody.length);
     
     return new Response(responseBody, {
-      status: response.status,
-      headers,
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error("Hugging Face edge function error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      fallback: true 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
