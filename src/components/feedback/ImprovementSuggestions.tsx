@@ -1,29 +1,18 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Lightbulb, Plus, Minus, ArrowRight, FlipHorizontal, Star, BookOpen, Target, Link, Type, Zap, ChevronDown, ChevronRight } from "lucide-react";
+import { Lightbulb, Plus, Minus, ArrowRight, FlipHorizontal, Star, BookOpen, Target } from "lucide-react";
 
 interface ImprovementSuggestionsProps {
   originalText: string;
   improvedText: string;
   band9Version?: string;
-  cohesionAnalysis?: string;
-  vocabularyEnhancement?: string;
-  grammarImprovements?: string;
 }
 
-const ImprovementSuggestions = ({ 
-  originalText, 
-  improvedText, 
-  band9Version,
-  cohesionAnalysis,
-  vocabularyEnhancement,
-  grammarImprovements
-}: ImprovementSuggestionsProps) => {
+const ImprovementSuggestions = ({ originalText, improvedText, band9Version }: ImprovementSuggestionsProps) => {
   const [viewMode, setViewMode] = useState<'original' | 'improved' | 'band9'>('improved');
-  const [expandedSections, setExpandedSections] = useState<string[]>(['improvements']);
 
   const parseImprovements = () => {
     const improvements = [];
@@ -126,31 +115,6 @@ const ImprovementSuggestions = ({
     }
   };
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => 
-      prev.includes(section) 
-        ? prev.filter(s => s !== section)
-        : [...prev, section]
-    );
-  };
-
-  const parseBeforeAfterExamples = (text: string) => {
-    const examples = [];
-    // Parse "original" → "improved" format
-    const beforeAfterRegex = /"([^"]+)"\s*→\s*"([^"]+)"\s*\(([^)]+)\)/g;
-    let match;
-    
-    while ((match = beforeAfterRegex.exec(text)) !== null) {
-      examples.push({
-        before: match[1],
-        after: match[2],
-        reason: match[3]
-      });
-    }
-    
-    return examples;
-  };
-
   return (
     <div className="space-y-4">
       {/* Toggle Button */}
@@ -224,226 +188,38 @@ const ImprovementSuggestions = ({
         </CardContent>
       </Card>
 
-      {/* Enhanced Improvement Sections */}
-      {viewMode === 'improved' && (
-        <div className="space-y-4">
-          {/* Key Improvements - Existing functionality */}
-          {improvements.length > 0 && (
-            <Collapsible 
-              open={expandedSections.includes('improvements')}
-              onOpenChange={() => toggleSection('improvements')}
-            >
-              <Card>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-gray-50">
-                    <CardTitle className="flex items-center justify-between text-lg">
-                      <div className="flex items-center gap-2">
-                        <Lightbulb className="w-5 h-5 text-yellow-500" />
-                        Key Improvements ({improvements.length})
-                      </div>
-                      {expandedSections.includes('improvements') ? 
-                        <ChevronDown className="w-5 h-5" /> : 
-                        <ChevronRight className="w-5 h-5" />
-                      }
-                    </CardTitle>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {improvements.slice(0, 5).map((improvement, index) => (
-                        <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                          <div className="flex-shrink-0 mt-1">
-                            {improvement.type === "addition" ? (
-                              <Plus className="w-4 h-4 text-green-600" />
-                            ) : improvement.type === "removal" ? (
-                              <Minus className="w-4 h-4 text-red-600" />
-                            ) : (
-                              <ArrowRight className="w-4 h-4 text-blue-600" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900 mb-1">
-                              "{improvement.text}"
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {improvement.suggestion}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+      {/* Key Improvements List - Only show for improved view */}
+      {viewMode === 'improved' && improvements.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Key Improvements</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {improvements.slice(0, 5).map((improvement, index) => (
+                <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="flex-shrink-0 mt-1">
+                    {improvement.type === "addition" ? (
+                      <Plus className="w-4 h-4 text-green-600" />
+                    ) : improvement.type === "removal" ? (
+                      <Minus className="w-4 h-4 text-red-600" />
+                    ) : (
+                      <ArrowRight className="w-4 h-4 text-blue-600" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900 mb-1">
+                      "{improvement.text}"
                     </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          )}
-
-          {/* Cohesion Analysis */}
-          {cohesionAnalysis && (
-            <Collapsible 
-              open={expandedSections.includes('cohesion')}
-              onOpenChange={() => toggleSection('cohesion')}
-            >
-              <Card>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-gray-50">
-                    <CardTitle className="flex items-center justify-between text-lg">
-                      <div className="flex items-center gap-2">
-                        <Link className="w-5 h-5 text-blue-500" />
-                        Cohesion & Flow
-                      </div>
-                      {expandedSections.includes('cohesion') ? 
-                        <ChevronDown className="w-5 h-5" /> : 
-                        <ChevronRight className="w-5 h-5" />
-                      }
-                    </CardTitle>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {cohesionAnalysis}
-                        </div>
-                      </div>
-                      {parseBeforeAfterExamples(cohesionAnalysis).length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-gray-900">Before → After Examples:</h4>
-                          {parseBeforeAfterExamples(cohesionAnalysis).map((example, index) => (
-                            <div key={index} className="bg-gray-50 p-3 rounded-lg border">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm font-mono">
-                                  {example.before}
-                                </span>
-                                <ArrowRight className="w-4 h-4 text-gray-500" />
-                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-mono">
-                                  {example.after}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600">{example.reason}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    <div className="text-sm text-gray-600">
+                      {improvement.suggestion}
                     </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          )}
-
-          {/* Vocabulary Enhancement */}
-          {vocabularyEnhancement && (
-            <Collapsible 
-              open={expandedSections.includes('vocabulary')}
-              onOpenChange={() => toggleSection('vocabulary')}
-            >
-              <Card>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-gray-50">
-                    <CardTitle className="flex items-center justify-between text-lg">
-                      <div className="flex items-center gap-2">
-                        <Type className="w-5 h-5 text-purple-500" />
-                        Vocabulary & Phrasing
-                      </div>
-                      {expandedSections.includes('vocabulary') ? 
-                        <ChevronDown className="w-5 h-5" /> : 
-                        <ChevronRight className="w-5 h-5" />
-                      }
-                    </CardTitle>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {vocabularyEnhancement}
-                        </div>
-                      </div>
-                      {parseBeforeAfterExamples(vocabularyEnhancement).length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-gray-900">Basic → Sophisticated Examples:</h4>
-                          {parseBeforeAfterExamples(vocabularyEnhancement).map((example, index) => (
-                            <div key={index} className="bg-gray-50 p-3 rounded-lg border">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm font-mono">
-                                  {example.before}
-                                </span>
-                                <ArrowRight className="w-4 h-4 text-gray-500" />
-                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-mono">
-                                  {example.after}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600">{example.reason}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          )}
-
-          {/* Grammar Improvements */}
-          {grammarImprovements && (
-            <Collapsible 
-              open={expandedSections.includes('grammar')}
-              onOpenChange={() => toggleSection('grammar')}
-            >
-              <Card>
-                <CollapsibleTrigger asChild>
-                  <CardHeader className="cursor-pointer hover:bg-gray-50">
-                    <CardTitle className="flex items-center justify-between text-lg">
-                      <div className="flex items-center gap-2">
-                        <Zap className="w-5 h-5 text-green-500" />
-                        Grammar & Structure
-                      </div>
-                      {expandedSections.includes('grammar') ? 
-                        <ChevronDown className="w-5 h-5" /> : 
-                        <ChevronRight className="w-5 h-5" />
-                      }
-                    </CardTitle>
-                  </CardHeader>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {grammarImprovements}
-                        </div>
-                      </div>
-                      {parseBeforeAfterExamples(grammarImprovements).length > 0 && (
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-gray-900">Simple → Complex Examples:</h4>
-                          {parseBeforeAfterExamples(grammarImprovements).map((example, index) => (
-                            <div key={index} className="bg-gray-50 p-3 rounded-lg border">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-mono">
-                                  {example.before}
-                                </span>
-                                <ArrowRight className="w-4 h-4 text-gray-500" />
-                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-mono">
-                                  {example.after}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600">{example.reason}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          )}
-        </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Band 9 vs Original Comparison - Only show for band9 view */}

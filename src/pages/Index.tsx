@@ -23,9 +23,6 @@ export interface AIFeedback {
   lineByLineAnalysis: string;
   markedErrors: string;
   improvedText: string;
-  cohesionAnalysis: string;
-  vocabularyEnhancement: string;
-  grammarImprovements: string;
   band9Version: string;
 }
 

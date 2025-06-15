@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,9 +81,6 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
         lineByLineAnalysis: parsedFeedback.lineByLineAnalysis,
         markedErrors: parsedFeedback.markedErrors,
         improvedText: parsedFeedback.improvedText,
-        cohesionAnalysis: parsedFeedback.cohesionAnalysis,
-        vocabularyEnhancement: parsedFeedback.vocabularyEnhancement,
-        grammarImprovements: parsedFeedback.grammarImprovements,
         band9Version: parsedFeedback.band9Version
       };
       
