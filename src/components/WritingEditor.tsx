@@ -20,7 +20,7 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   // Use the updated hardcoded API key
-  const HARDCODED_API_KEY = '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';
+  const HARDCODED_API_KEY = 'sk-or-v1-73c6a4c5595b245db69b12f28a65f818728d9ddded5234dd3232650159741d39hj';
 
   // Listen for selected prompts from localStorage
   useEffect(() => {

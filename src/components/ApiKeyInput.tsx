@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,7 +10,7 @@ interface ApiKeyInputProps {
 
 const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
   // Use the updated hardcoded API key
-  const HARDCODED_API_KEY = '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';
+  const HARDCODED_API_KEY = 'sk-or-v1-73c6a4c5595b245db69b12f28a65f818728d9ddded5234dd3232650159741d39hj';
 
   // Set the API key on component mount
   useState(() => {
@@ -51,4 +50,3 @@ const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
 };
 
 export default ApiKeyInput;
-
