@@ -80,7 +80,8 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
         explanation: parsedFeedback.explanation,
         lineByLineAnalysis: parsedFeedback.lineByLineAnalysis,
         markedErrors: parsedFeedback.markedErrors,
-        improvedText: parsedFeedback.improvedText
+        improvedText: parsedFeedback.improvedText,
+        band9Version: parsedFeedback.band9Version
       };
       
       const submission: WritingSubmission = {

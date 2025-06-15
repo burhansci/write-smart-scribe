@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,6 +23,7 @@ export interface AIFeedback {
   lineByLineAnalysis: string;
   markedErrors: string;
   improvedText: string;
+  band9Version: string;
 }
 
 const Index = () => {

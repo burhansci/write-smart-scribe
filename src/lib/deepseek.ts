@@ -85,6 +85,19 @@ Example: "The economy [+has been significantly+] affected. [~Very~] [+Numerous+]
 
 Keep suggestions practical and immediately applicable. Focus on improvements that raise the band score.
 
+**Band 9 Version**
+Provide a complete Band 9 rewrite of the entire original text. This should demonstrate:
+- Sophisticated vocabulary and precise collocations
+- Complex grammatical structures with varied sentence types
+- Advanced cohesive devices and linking expressions
+- Precise academic language and formal register
+- Natural flow with seamless paragraph transitions
+- Nuanced argumentation and sophisticated reasoning
+- Error-free grammar and punctuation
+- Appropriate word count and essay structure
+
+Write the complete Band 9 version as flowing, natural text without any markers or annotations. This should serve as the target standard the student should aspire to reach.
+
 IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each suggestion should clearly explain why it's better.`;
 
   return [
@@ -131,6 +144,7 @@ export const parseDeepSeekResponse = (response: string) => {
   let lineByLineAnalysis = '';
   let markedErrors = '';
   let improvedText = '';
+  let band9Version = '';
 
   for (let i = 0; i < sections.length; i++) {
     const sectionHeader = sections[i].toLowerCase();
@@ -150,6 +164,8 @@ export const parseDeepSeekResponse = (response: string) => {
       markedErrors = sectionContent.trim();
     } else if (sectionHeader.includes('improved') || sectionHeader.includes('suggestions')) {
       improvedText = sectionContent.trim();
+    } else if (sectionHeader.includes('band 9') || sectionHeader.includes('band9')) {
+      band9Version = sectionContent.trim();
     }
   }
 
@@ -175,12 +191,18 @@ export const parseDeepSeekResponse = (response: string) => {
     improvedText = `${markedErrors} [+Additionally,+]{Add linking words} [+sophisticated+]{Use varied vocabulary} [+In conclusion,+]{Strong concluding phrases}`;
   }
 
+  if (!band9Version || band9Version.length < 50) {
+    console.log('Generating fallback Band 9 version...');
+    band9Version = 'Band 9 version not available in this response. The improved text with suggestions above provides targeted improvements for your writing.';
+  }
+
   console.log('Parsed results:', { 
     score, 
     explanation: explanation.substring(0, 100), 
     lineByLineAnalysis: lineByLineAnalysis.substring(0, 100),
     markedErrors: markedErrors.substring(0, 100), 
-    improvedText: improvedText.substring(0, 100) 
+    improvedText: improvedText.substring(0, 100),
+    band9Version: band9Version.substring(0, 100)
   });
 
   return {
@@ -188,6 +210,7 @@ export const parseDeepSeekResponse = (response: string) => {
     explanation: explanation || 'Analysis completed',
     lineByLineAnalysis: lineByLineAnalysis,
     markedErrors: markedErrors || 'No errors marked',
-    improvedText: improvedText
+    improvedText: improvedText,
+    band9Version: band9Version
   };
 };

@@ -3,15 +3,16 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, Plus, Minus, ArrowRight, FlipHorizontal } from "lucide-react";
+import { Lightbulb, Plus, Minus, ArrowRight, FlipHorizontal, Star, BookOpen, Target } from "lucide-react";
 
 interface ImprovementSuggestionsProps {
   originalText: string;
   improvedText: string;
+  band9Version?: string;
 }
 
-const ImprovementSuggestions = ({ originalText, improvedText }: ImprovementSuggestionsProps) => {
-  const [showImproved, setShowImproved] = useState(true);
+const ImprovementSuggestions = ({ originalText, improvedText, band9Version }: ImprovementSuggestionsProps) => {
+  const [viewMode, setViewMode] = useState<'original' | 'improved' | 'band9'>('improved');
 
   const parseImprovements = () => {
     const improvements = [];
@@ -64,29 +65,94 @@ const ImprovementSuggestions = ({ originalText, improvedText }: ImprovementSugge
     <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">{originalText}</div>
   );
 
+  const renderBand9Text = () => (
+    <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">{band9Version}</div>
+  );
+
+  const cycleViewMode = () => {
+    if (viewMode === 'original') {
+      setViewMode('improved');
+    } else if (viewMode === 'improved') {
+      setViewMode(band9Version ? 'band9' : 'original');
+    } else {
+      setViewMode('original');
+    }
+  };
+
+  const getViewTitle = () => {
+    switch (viewMode) {
+      case 'original':
+        return 'Original Version';
+      case 'improved':
+        return 'Improved Version (Marked Changes)';
+      case 'band9':
+        return 'Band 9 Target Version';
+      default:
+        return 'Text Version';
+    }
+  };
+
+  const getViewIcon = () => {
+    switch (viewMode) {
+      case 'original':
+        return <BookOpen className="w-5 h-5 text-blue-500" />;
+      case 'improved':
+        return <Lightbulb className="w-5 h-5 text-yellow-500" />;
+      case 'band9':
+        return <Star className="w-5 h-5 text-purple-500" />;
+      default:
+        return <Lightbulb className="w-5 h-5 text-yellow-500" />;
+    }
+  };
+
+  const getNextViewLabel = () => {
+    if (viewMode === 'original') {
+      return 'Show Marked Improvements';
+    } else if (viewMode === 'improved') {
+      return band9Version ? 'Show Band 9 Version' : 'Show Original';
+    } else {
+      return 'Show Original';
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Toggle Button */}
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <Badge variant={viewMode === 'original' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setViewMode('original')}>
+            <BookOpen className="w-3 h-3 mr-1" />
+            Original
+          </Badge>
+          <Badge variant={viewMode === 'improved' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setViewMode('improved')}>
+            <Target className="w-3 h-3 mr-1" />
+            Marked Changes
+          </Badge>
+          {band9Version && (
+            <Badge variant={viewMode === 'band9' ? 'default' : 'outline'} className="cursor-pointer bg-purple-600 hover:bg-purple-700" onClick={() => setViewMode('band9')}>
+              <Star className="w-3 h-3 mr-1" />
+              Band 9 Version
+            </Badge>
+          )}
+        </div>
         <Button
           variant="outline"
           size="sm"
-          className="mb-2"
-          onClick={() => setShowImproved((v) => !v)}
+          onClick={cycleViewMode}
         >
           <FlipHorizontal className="w-4 h-4 mr-2" />
-          {showImproved ? "Show Original" : "Show Improved"}
+          {getNextViewLabel()}
         </Button>
       </div>
 
-      {/* Improved or Original Text Display */}
+      {/* Text Display */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-yellow-500" />
-            {showImproved ? "Improved Version" : "Original Version"}
+            {getViewIcon()}
+            {getViewTitle()}
           </CardTitle>
-          {showImproved && (
+          {viewMode === 'improved' && (
             <div className="flex gap-2 text-sm">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <Plus className="w-3 h-3 mr-1" />
@@ -98,16 +164,32 @@ const ImprovementSuggestions = ({ originalText, improvedText }: ImprovementSugge
               </Badge>
             </div>
           )}
+          {viewMode === 'band9' && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="w-4 h-4 text-purple-600" />
+                <span className="font-semibold text-purple-800">Band 9 Features</span>
+              </div>
+              <ul className="text-purple-700 space-y-1 text-xs">
+                <li>• Sophisticated vocabulary and precise collocations</li>
+                <li>• Complex grammatical structures with sentence variety</li>
+                <li>• Advanced cohesive devices and linking expressions</li>
+                <li>• Formal academic register and natural flow</li>
+              </ul>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
-          <div className={`${showImproved ? "bg-gray-50" : "bg-white"} p-4 rounded-lg border`}>
-            {showImproved ? renderImprovedText() : renderOriginalText()}
+          <div className={`${viewMode === 'original' ? "bg-blue-50" : viewMode === 'improved' ? "bg-gray-50" : "bg-purple-50"} p-4 rounded-lg border`}>
+            {viewMode === 'original' && renderOriginalText()}
+            {viewMode === 'improved' && renderImprovedText()}
+            {viewMode === 'band9' && renderBand9Text()}
           </div>
         </CardContent>
       </Card>
 
-      {/* Key Improvements List */}
-      {showImproved && improvements.length > 0 && (
+      {/* Key Improvements List - Only show for improved view */}
+      {viewMode === 'improved' && improvements.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Key Improvements</CardTitle>
@@ -139,9 +221,58 @@ const ImprovementSuggestions = ({ originalText, improvedText }: ImprovementSugge
           </CardContent>
         </Card>
       )}
+
+      {/* Band 9 vs Original Comparison - Only show for band9 view */}
+      {viewMode === 'band9' && band9Version && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Star className="w-5 h-5 text-purple-500" />
+              What Makes This Band 9?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-900">Vocabulary Enhancement</h4>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Sophisticated word choices</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Precise collocations</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Academic register</span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-900">Structure & Flow</h4>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Complex sentence structures</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Advanced linking devices</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                    <span>Seamless coherence</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
 
 export default ImprovementSuggestions;
-

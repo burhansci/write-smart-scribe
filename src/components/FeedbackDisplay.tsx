@@ -177,6 +177,7 @@ ${submission.feedback?.improvedText}
           <ImprovementSuggestions
             originalText={submission.text}
             improvedText={submission.feedback.improvedText}
+            band9Version={submission.feedback.band9Version}
           />
         </TabsContent>
 
