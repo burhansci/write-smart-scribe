@@ -32,7 +32,7 @@ const WritingHistory = ({ onSelectSubmission }: WritingHistoryProps) => {
           console.error('Error fetching submissions:', error);
           toast({ title: "Error", description: "Could not fetch writing history.", variant: "destructive" });
         } else if (data) {
-          const parsedSubmissions = data.map((sub: any) => ({
+          const parsedSubmissions: WritingSubmission[] = data.map((sub: any) => ({
             id: sub.id,
             text: sub.text,
             scoringSystem: 'IELTS',
