@@ -1,5 +1,0 @@
-
-project_id = "dowhqmirjcwppnqezztf"
-
-[functions.huggingface-analysis]
-  verify_jwt = true

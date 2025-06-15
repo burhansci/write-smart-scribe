@@ -3,10 +3,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Eye, Calendar, HelpCircle, Loader2 } from "lucide-react";
+import { Trash2, Eye, Calendar, HelpCircle } from "lucide-react";
 import { WritingSubmission } from "@/pages/Index";
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
 
 interface WritingHistoryProps {
   onSelectSubmission: (submission: WritingSubmission) => void;
@@ -14,95 +12,27 @@ interface WritingHistoryProps {
 
 const WritingHistory = ({ onSelectSubmission }: WritingHistoryProps) => {
   const [submissions, setSubmissions] = useState<WritingSubmission[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchSubmissions = async () => {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase
-          .from('writing_submissions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+    const savedSubmissions = JSON.parse(localStorage.getItem('writingSubmissions') || '[]');
+    // Convert timestamp strings back to Date objects
+    const parsedSubmissions = savedSubmissions.map((sub: any) => ({
+      ...sub,
+      timestamp: new Date(sub.timestamp)
+    }));
+    setSubmissions(parsedSubmissions);
+  }, []);
 
-        if (error) {
-          console.error('Error fetching submissions:', error);
-          toast({ title: "Error", description: "Could not fetch writing history.", variant: "destructive" });
-        } else if (data) {
-          const parsedSubmissions: WritingSubmission[] = data.map((sub: any) => ({
-            id: sub.id,
-            text: sub.text,
-            scoringSystem: 'IELTS',
-            timestamp: new Date(sub.created_at),
-            question: sub.question,
-            feedback: {
-              score: sub.score,
-              explanation: sub.explanation,
-              lineByLineAnalysis: sub.line_by_line_analysis,
-              markedErrors: sub.marked_errors,
-              improvedText: sub.improved_text,
-              band9Version: sub.band9_version,
-            }
-          }));
-          setSubmissions(parsedSubmissions);
-        }
-      }
-      setLoading(false);
-    };
-
-    fetchSubmissions();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        fetchSubmissions();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [toast]);
-
-  const deleteSubmission = async (id: string) => {
-    const originalSubmissions = [...submissions];
+  const deleteSubmission = (id: string) => {
     const updatedSubmissions = submissions.filter(sub => sub.id !== id);
     setSubmissions(updatedSubmissions);
-
-    const { error } = await supabase
-      .from('writing_submissions')
-      .delete()
-      .match({ id });
-
-    if (error) {
-      console.error('Error deleting submission:', error);
-      toast({ title: "Error", description: "Could not delete submission.", variant: "destructive" });
-      setSubmissions(originalSubmissions);
-    }
+    localStorage.setItem('writingSubmissions', JSON.stringify(updatedSubmissions));
   };
 
-  const clearAllHistory = async () => {
-    const originalSubmissions = [...submissions];
+  const clearAllHistory = () => {
     setSubmissions([]);
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { error } = await supabase
-        .from('writing_submissions')
-        .delete()
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error clearing history:', error);
-        toast({ title: "Error", description: "Could not clear history.", variant: "destructive" });
-        setSubmissions(originalSubmissions);
-      }
-    }
+    localStorage.removeItem('writingSubmissions');
   };
-
-  if (loading) {
-    return <Card className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" /></Card>;
-  }
 
   if (submissions.length === 0) {
     return (
