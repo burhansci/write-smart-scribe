@@ -25,7 +25,8 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
-  const HARDCODED_API_KEY = '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';
+  // Replace with your latest OpenRouter API key
+  const HARDCODED_API_KEY = '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';
 
   useEffect(() => {
     const checkForSelectedPrompt = () => {
@@ -138,14 +139,14 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
     try {
       let parsedFeedback: AIFeedback;
       try {
-        // Attempt 1: Use the primary provider (OpenRouter)
+        // Attempt 1: Use the primary provider (OpenRouter) with the new key
         console.log('Starting OpenRouter analysis...');
         const response = await callDeepSeekAPI(messages, HARDCODED_API_KEY);
         console.log('OpenRouter response:', response);
         parsedFeedback = parseDeepSeekResponse(response);
         console.log('Parsed feedback:', parsedFeedback);
       } catch (error) {
-        // Check if it's a credit issue (402) or similar message
+        // If OpenRouter fails (e.g. 402, credit, connection), fallback to Hugging Face analysis
         if (error instanceof Error && (error.message.includes('402') || error.message.toLowerCase().includes('insufficient'))) {
           console.warn('OpenRouter credit issue. Falling back to Hugging Face.');
           toast({
@@ -154,13 +155,12 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
             duration: 5000,
           });
 
-          // Attempt 2: Fallback to the free provider (Hugging Face)
           const hfResponse = await callHuggingFaceAPI(messages);
           console.log('Hugging Face response:', hfResponse);
           parsedFeedback = parseHuggingFaceResponse(hfResponse);
           console.log('Parsed Hugging Face feedback:', parsedFeedback);
         } else {
-          throw error; // Re-throw any other errors
+          throw error;
         }
       }
 
