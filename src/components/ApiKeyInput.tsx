@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,8 +11,8 @@ interface ApiKeyInputProps {
 }
 
 const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
-  // Updated API key - this should be a valid OpenRouter key
-  const HARDCODED_API_KEY = 'sk-or-v1-d4c8f2e1a5b3c7f9e8d2a6b4c9f1e3d7a5b8c2f6e9d1a4b7c0f3e6d9a2b5c8f1e4d7';
+  // Updated API key with the one provided by user
+  const HARDCODED_API_KEY = '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';
 
   // Set the API key on component mount
   useState(() => {
