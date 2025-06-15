@@ -8,6 +8,7 @@ import { Loader2, Send, BookOpen, PenTool } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { WritingSubmission, AIFeedback } from "@/pages/Index";
 import { createDeepSeekPrompt, callDeepSeekAPI, parseDeepSeekResponse } from "@/lib/deepseek";
+import { callHuggingFaceAPI, parseHuggingFaceResponse } from "@/lib/huggingface";
 import { supabase } from '@/integrations/supabase/client';
 
 interface WritingEditorProps {
@@ -22,10 +23,8 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
 
-  // Use the hardcoded API key
   const HARDCODED_API_KEY = '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';
 
-  // Listen for selected prompts from localStorage
   useEffect(() => {
     const checkForSelectedPrompt = () => {
       const selectedPrompt = localStorage.getItem('selectedPrompt');
@@ -47,6 +46,71 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  const saveSubmission = async (parsedFeedback: AIFeedback) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Not Authenticated", description: "You must be logged in to save your writing.", variant: "destructive" });
+      setIsAnalyzing(false);
+      return;
+    }
+    
+    const submissionData = {
+      user_id: user.id,
+      text,
+      scoring_system: 'IELTS',
+      question: writingMode === 'question' ? (question || undefined) : undefined,
+      score: parsedFeedback.score,
+      explanation: parsedFeedback.explanation,
+      line_by_line_analysis: parsedFeedback.lineByLineAnalysis,
+      marked_errors: parsedFeedback.markedErrors,
+      improved_text: parsedFeedback.improvedText,
+      band9_version: parsedFeedback.band9Version,
+    };
+
+    const { data: newSubmission, error } = await supabase
+      .from('writing_submissions')
+      .insert(submissionData)
+      .select()
+      .single();
+    
+    if (error) {
+      throw error;
+    }
+
+    const submissionForState: WritingSubmission = {
+      id: newSubmission.id,
+      text: newSubmission.text,
+      scoringSystem: 'IELTS',
+      timestamp: new Date(newSubmission.created_at),
+      feedback: {
+        score: newSubmission.score || "",
+        explanation: newSubmission.explanation || "",
+        lineByLineAnalysis: newSubmission.line_by_line_analysis || "",
+        markedErrors: newSubmission.marked_errors || "",
+        improvedText: newSubmission.improved_text || "",
+        band9Version: newSubmission.band_9_version || "",
+      },
+      question: newSubmission.question || undefined,
+    };
+
+    if (writingMode === 'question' && question) {
+      const usedQuestions = JSON.parse(localStorage.getItem('usedQuestions') || '[]');
+      if (!usedQuestions.includes(question)) {
+        usedQuestions.push(question);
+        localStorage.setItem('usedQuestions', JSON.stringify(usedQuestions));
+      }
+    }
+
+    onSubmissionComplete(submissionForState);
+    setText('');
+    setQuestion('');
+    
+    toast({
+      title: "Analysis Complete!",
+      description: "Your writing has been analyzed and saved. Check the feedback tab.",
+    });
+  };
+
   const analyzeWriting = async () => {
     if (!text.trim()) {
       toast({
@@ -67,82 +131,41 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
     }
 
     setIsAnalyzing(true);
+    const messages = createDeepSeekPrompt(text, 'IELTS');
 
     try {
-      console.log('Starting OpenRouter analysis...');
-      const messages = createDeepSeekPrompt(text, 'IELTS');
-      const response = await callDeepSeekAPI(messages, HARDCODED_API_KEY);
-      console.log('OpenRouter response:', response);
-      
-      const parsedFeedback = parseDeepSeekResponse(response);
-      console.log('Parsed feedback:', parsedFeedback);
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({ title: "Not Authenticated", description: "You must be logged in to save your writing.", variant: "destructive" });
-        setIsAnalyzing(false);
-        return;
-      }
-      
-      const submissionData = {
-        user_id: user.id,
-        text,
-        scoring_system: 'IELTS',
-        question: writingMode === 'question' ? (question || undefined) : undefined,
-        score: parsedFeedback.score,
-        explanation: parsedFeedback.explanation,
-        line_by_line_analysis: parsedFeedback.lineByLineAnalysis,
-        marked_errors: parsedFeedback.markedErrors,
-        improved_text: parsedFeedback.improvedText,
-        band9_version: parsedFeedback.band9Version,
-      };
+      let parsedFeedback: AIFeedback;
+      try {
+        // Attempt 1: Use the primary provider (OpenRouter)
+        console.log('Starting OpenRouter analysis...');
+        const response = await callDeepSeekAPI(messages, HARDCODED_API_KEY);
+        console.log('OpenRouter response:', response);
+        parsedFeedback = parseDeepSeekResponse(response);
+        console.log('Parsed feedback:', parsedFeedback);
+      } catch (error) {
+        // Check if it's a credit issue (402) or similar message
+        if (error instanceof Error && (error.message.includes('402') || error.message.toLowerCase().includes('insufficient'))) {
+          console.warn('OpenRouter credit issue. Falling back to Hugging Face.');
+          toast({
+            title: "Using Free Alternative",
+            description: "Falling back to a free analysis model. This may take a moment...",
+            duration: 5000,
+          });
 
-      const { data: newSubmission, error } = await supabase
-        .from('writing_submissions')
-        .insert(submissionData)
-        .select()
-        .single();
-      
-      if (error) {
-        throw error;
-      }
-
-      const submissionForState: WritingSubmission = {
-        id: newSubmission.id,
-        text: newSubmission.text,
-        scoringSystem: 'IELTS',
-        timestamp: new Date(newSubmission.created_at),
-        feedback: {
-          score: newSubmission.score || "",
-          explanation: newSubmission.explanation || "",
-          lineByLineAnalysis: newSubmission.line_by_line_analysis || "",
-          markedErrors: newSubmission.marked_errors || "",
-          improvedText: newSubmission.improved_text || "",
-          band9Version: newSubmission.band9_version || "",
-        },
-        question: newSubmission.question || undefined,
-      };
-
-      // Track used questions only for question mode
-      if (writingMode === 'question' && question) {
-        const usedQuestions = JSON.parse(localStorage.getItem('usedQuestions') || '[]');
-        if (!usedQuestions.includes(question)) {
-          usedQuestions.push(question);
-          localStorage.setItem('usedQuestions', JSON.stringify(usedQuestions));
+          // Attempt 2: Fallback to the free provider (Hugging Face)
+          const hfResponse = await callHuggingFaceAPI(messages);
+          console.log('Hugging Face response:', hfResponse);
+          parsedFeedback = parseHuggingFaceResponse(hfResponse);
+          console.log('Parsed Hugging Face feedback:', parsedFeedback);
+        } else {
+          throw error; // Re-throw any other errors
         }
       }
 
-      onSubmissionComplete(submissionForState);
-      setText('');
-      setQuestion('');
-      
-      toast({
-        title: "Analysis Complete!",
-        description: "Your writing has been analyzed and saved. Check the feedback tab.",
-      });
+      await saveSubmission(parsedFeedback);
 
     } catch (error) {
-      console.error('OpenRouter analysis error:', error);
+      console.error('Analysis error:', error);
       toast({
         title: "Analysis Error",
         description: error instanceof Error ? error.message : "Failed to analyze your writing. Please try again.",
@@ -296,3 +319,4 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
 };
 
 export default WritingEditor;
+
