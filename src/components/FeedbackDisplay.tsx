@@ -1,11 +1,11 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, RefreshCw, BarChart3, Lightbulb, FileText, Eye, EyeOff, List } from "lucide-react";
+import { Download, RefreshCw, BarChart3, AlertCircle, Lightbulb, FileText, Eye, EyeOff, List } from "lucide-react";
 import { WritingSubmission } from "@/pages/Index";
 import ScoreOverview from "@/components/feedback/ScoreOverview";
+import ErrorHighlighter from "@/components/feedback/ErrorHighlighter";
 import ImprovementSuggestions from "@/components/feedback/ImprovementSuggestions";
 import DetailedAnalysis from "@/components/feedback/DetailedAnalysis";
 import SideBySideComparison from "@/components/feedback/SideBySideComparison";
@@ -39,6 +39,9 @@ ${submission.feedback?.explanation}
 
 LINE-BY-LINE ANALYSIS:
 ${submission.feedback?.lineByLineAnalysis}
+
+MARKED ERRORS:
+${submission.feedback?.markedErrors}
 
 IMPROVEMENTS:
 ${submission.feedback?.improvedText}
@@ -116,7 +119,7 @@ ${submission.feedback?.improvedText}
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -124,6 +127,10 @@ ${submission.feedback?.improvedText}
           <TabsTrigger value="line-analysis" className="flex items-center gap-2">
             <List className="w-4 h-4" />
             <span className="hidden sm:inline">Line Analysis</span>
+          </TabsTrigger>
+          <TabsTrigger value="errors" className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">Errors</span>
           </TabsTrigger>
           <TabsTrigger value="improvements" className="flex items-center gap-2">
             <Lightbulb className="w-4 h-4" />
@@ -156,6 +163,13 @@ ${submission.feedback?.improvedText}
           <LineByLineAnalysis 
             originalText={submission.text}
             lineByLineAnalysis={submission.feedback.lineByLineAnalysis}
+          />
+        </TabsContent>
+
+        <TabsContent value="errors" className="space-y-4">
+          <ErrorHighlighter 
+            originalText={submission.text}
+            markedErrors={submission.feedback.markedErrors}
           />
         </TabsContent>
 
