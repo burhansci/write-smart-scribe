@@ -1,3 +1,4 @@
+
 // OpenRouter API configuration and client
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -120,7 +121,7 @@ export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: strin
     model: 'deepseek/deepseek-chat',
     messages,
     temperature: 0.3,
-    max_tokens: 4000,
+    max_tokens: 3800,
   };
 
   console.log('Request body:', JSON.stringify(requestBody, null, 2));
