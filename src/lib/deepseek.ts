@@ -15,7 +15,6 @@ export interface DeepSeekResponse {
 }
 
 export const createDeepSeekPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
-  // ... keep existing code (system prompt creation logic)
   const systemPrompt = `You are an expert IELTS Writing examiner with 15+ years of experience. Provide focused, actionable feedback that helps students improve their band score.
 
 Your response must follow this EXACT format with these section headers:
@@ -62,18 +61,6 @@ Specific Suggestions:
 Priority: High
 
 Be extremely specific - identify exact words, phrases, and provide detailed explanations for each issue.
-
-**Marked Errors**
-Identify 5-8 critical errors that impact the band score. Use this exact format:
-[error_text]{ErrorType: Specific correction}
-
-Examples:
-[don't have]{Subject-Verb Agreement: Use "doesn't have"}
-[very good]{Word Choice: Use "excellent" for academic writing}
-[alot]{Spelling: Should be "a lot"}
-[In conclusion of]{Grammar: Use "In conclusion," or "To conclude,"}
-
-Focus on errors that will make the biggest impact on band score improvement.
 
 **Improved with Suggestions**
 Show 3-5 specific improvements using these markers:
@@ -246,8 +233,6 @@ export const parseDeepSeekResponse = (response: string) => {
       explanation = sectionContent.trim();
     } else if (sectionHeader.includes('line-by-line') || sectionHeader.includes('line by line')) {
       lineByLineAnalysis = sectionContent.trim();
-    } else if (sectionHeader.includes('marked') && sectionHeader.includes('error')) {
-      markedErrors = sectionContent.trim();
     } else if (sectionHeader.includes('improved') || sectionHeader.includes('suggestions')) {
       improvedText = sectionContent.trim();
     } else if (sectionHeader.includes('band 9') || sectionHeader.includes('band9')) {
@@ -268,13 +253,12 @@ export const parseDeepSeekResponse = (response: string) => {
     lineByLineAnalysis = 'Line-by-line analysis not available in this response.';
   }
   
-  if (!markedErrors) {
-    markedErrors = 'No specific errors marked in this analysis.';
-  }
+  // Set empty markedErrors since we're eliminating error section
+  markedErrors = '';
   
   if (!improvedText || improvedText.length < 50) {
     console.log('Generating fallback improvements...');
-    improvedText = `${markedErrors} [+Additionally,+]{Add linking words} [+sophisticated+]{Use varied vocabulary} [+In conclusion,+]{Strong concluding phrases}`;
+    improvedText = `[+Additionally,+]{Add linking words} [+sophisticated+]{Use varied vocabulary} [+In conclusion,+]{Strong concluding phrases}`;
   }
 
   // ROBUST BAND 9 FALLBACK - NEVER return "not available"
@@ -296,7 +280,7 @@ export const parseDeepSeekResponse = (response: string) => {
     score, 
     explanation: explanation.substring(0, 100), 
     lineByLineAnalysis: lineByLineAnalysis.substring(0, 100),
-    markedErrors: markedErrors.substring(0, 100), 
+    markedErrors: 'Eliminated to reduce tokens', 
     improvedText: improvedText.substring(0, 100),
     band9Version: band9Version.substring(0, 100)
   });
@@ -305,7 +289,7 @@ export const parseDeepSeekResponse = (response: string) => {
     score: score || '6.0',
     explanation: explanation || 'Analysis completed',
     lineByLineAnalysis: lineByLineAnalysis,
-    markedErrors: markedErrors || 'No errors marked',
+    markedErrors: markedErrors || '',
     improvedText: improvedText,
     band9Version: band9Version
   };
