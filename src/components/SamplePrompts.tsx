@@ -39,7 +39,7 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [usedQuestions, setUsedQuestions] = useState<string[]>([]);
 
-  const categories = ['ALL', 'Education', 'Environment', 'Technology', 'Media', 'Advertisement', 'Children', 'Young People', 'Old People', 'Social Issues', 'Family', 'Culture', 'Drugs', 'Health', 'Foreign Language', 'Ethical Issues', 'Building', 'Lifestyle', 'Others'];
+  const categories = ['ALL', 'Advertisement', 'Art', 'Building', 'Children', 'City Life', 'Climate Change', 'Crime', 'Culture', 'Drugs', 'Education', 'Environment', 'Ethical Issues', 'Family', 'Food', 'Foreign Language', 'Gender', 'Globalization', 'Government', 'Happiness', 'Health', 'History', 'Lifestyle', 'Media', 'Music', 'News', 'Old People', 'Robots', 'Shopping', 'Social Issues', 'Space', 'Sports', 'Technology', 'Tourism', 'Transport', 'Water', 'Work', 'Young People', 'Others'];
 
   const { data: rawPrompts = [], isLoading, isError } = useQuery({
     queryKey: ['sampleQuestions'],
