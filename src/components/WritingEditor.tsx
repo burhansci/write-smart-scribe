@@ -5,9 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Send, BookOpen, PenTool } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { WritingSubmission, AIFeedback } from "@/pages/Index";
 import { createDeepSeekPrompt, callDeepSeekAPI, parseDeepSeekResponse } from "@/lib/deepseek";
+import { supabase } from '@/integrations/supabase/client';
 
 interface WritingEditorProps {
   onSubmissionComplete: (submission: WritingSubmission) => void;
@@ -19,6 +20,7 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
   const [question, setQuestion] = useState<string>('');
   const [writingMode, setWritingMode] = useState<'question' | 'free'>('question');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { toast } = useToast();
 
   // Use the hardcoded API key
   const HARDCODED_API_KEY = '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';
@@ -75,28 +77,51 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
       const parsedFeedback = parseDeepSeekResponse(response);
       console.log('Parsed feedback:', parsedFeedback);
       
-      const feedback: AIFeedback = {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Not Authenticated", description: "You must be logged in to save your writing.", variant: "destructive" });
+        setIsAnalyzing(false);
+        return;
+      }
+      
+      const submissionData = {
+        user_id: user.id,
+        text,
+        scoring_system: 'IELTS',
+        question: writingMode === 'question' ? (question || undefined) : undefined,
         score: parsedFeedback.score,
         explanation: parsedFeedback.explanation,
-        lineByLineAnalysis: parsedFeedback.lineByLineAnalysis,
-        markedErrors: parsedFeedback.markedErrors,
-        improvedText: parsedFeedback.improvedText,
-        band9Version: parsedFeedback.band9Version
-      };
-      
-      const submission: WritingSubmission = {
-        id: Date.now().toString(),
-        text,
-        scoringSystem: 'IELTS',
-        timestamp: new Date(),
-        feedback,
-        question: writingMode === 'question' ? (question || undefined) : undefined
+        line_by_line_analysis: parsedFeedback.lineByLineAnalysis,
+        marked_errors: parsedFeedback.markedErrors,
+        improved_text: parsedFeedback.improvedText,
+        band9_version: parsedFeedback.band9Version,
       };
 
-      // Save to localStorage
-      const savedSubmissions = JSON.parse(localStorage.getItem('writingSubmissions') || '[]');
-      savedSubmissions.unshift(submission);
-      localStorage.setItem('writingSubmissions', JSON.stringify(savedSubmissions.slice(0, 10)));
+      const { data: newSubmission, error } = await supabase
+        .from('writing_submissions')
+        .insert(submissionData)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+
+      const submissionForState: WritingSubmission = {
+        id: newSubmission.id,
+        text: newSubmission.text,
+        scoringSystem: 'IELTS',
+        timestamp: new Date(newSubmission.created_at),
+        feedback: {
+          score: newSubmission.score || "",
+          explanation: newSubmission.explanation || "",
+          lineByLineAnalysis: newSubmission.line_by_line_analysis || "",
+          markedErrors: newSubmission.marked_errors || "",
+          improvedText: newSubmission.improved_text || "",
+          band9Version: newSubmission.band9_version || "",
+        },
+        question: newSubmission.question || undefined,
+      };
 
       // Track used questions only for question mode
       if (writingMode === 'question' && question) {
@@ -107,13 +132,13 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
         }
       }
 
-      onSubmissionComplete(submission);
+      onSubmissionComplete(submissionForState);
       setText('');
       setQuestion('');
       
       toast({
         title: "Analysis Complete!",
-        description: "Your writing has been analyzed. Check the feedback tab.",
+        description: "Your writing has been analyzed and saved. Check the feedback tab.",
       });
 
     } catch (error) {

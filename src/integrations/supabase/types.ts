@@ -9,21 +9,102 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      History: {
+      profiles: {
         Row: {
-          created_at: string
-          history: string
-          id: number
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          history: string
-          id?: number
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          history?: string
-          id?: number
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sample_questions: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          difficulty_level: string | null
+          id: string
+          question: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          difficulty_level?: string | null
+          id?: string
+          question: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          difficulty_level?: string | null
+          id?: string
+          question?: string
+        }
+        Relationships: []
+      }
+      writing_submissions: {
+        Row: {
+          band9_version: string | null
+          created_at: string | null
+          explanation: string | null
+          id: string
+          improved_text: string | null
+          line_by_line_analysis: string | null
+          marked_errors: string | null
+          question: string | null
+          score: string | null
+          scoring_system: string | null
+          text: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          band9_version?: string | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          improved_text?: string | null
+          line_by_line_analysis?: string | null
+          marked_errors?: string | null
+          question?: string | null
+          score?: string | null
+          scoring_system?: string | null
+          text: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          band9_version?: string | null
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          improved_text?: string | null
+          line_by_line_analysis?: string | null
+          marked_errors?: string | null
+          question?: string | null
+          score?: string | null
+          scoring_system?: string | null
+          text?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
