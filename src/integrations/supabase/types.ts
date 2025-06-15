@@ -38,25 +38,34 @@ export type Database = {
       }
       sample_questions: {
         Row: {
-          category: string | null
+          category: string
           created_at: string | null
           difficulty_level: string | null
           id: string
           question: string
+          time_limit: string | null
+          title: string | null
+          word_count: string | null
         }
         Insert: {
-          category?: string | null
+          category: string
           created_at?: string | null
           difficulty_level?: string | null
           id?: string
           question: string
+          time_limit?: string | null
+          title?: string | null
+          word_count?: string | null
         }
         Update: {
-          category?: string | null
+          category?: string
           created_at?: string | null
           difficulty_level?: string | null
           id?: string
           question?: string
+          time_limit?: string | null
+          title?: string | null
+          word_count?: string | null
         }
         Relationships: []
       }
