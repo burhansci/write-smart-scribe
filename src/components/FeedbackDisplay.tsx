@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, RefreshCw, BarChart3, AlertCircle, Lightbulb, FileText, Eye, EyeOff, List } from "lucide-react";
+import { Download, RefreshCw, BarChart3, AlertCircle, Lightbulb, FileText, Eye, EyeOff, List, Link, Type, Zap } from "lucide-react";
 import { WritingSubmission } from "@/pages/Index";
 import ScoreOverview from "@/components/feedback/ScoreOverview";
 import ErrorHighlighter from "@/components/feedback/ErrorHighlighter";
@@ -11,6 +12,9 @@ import DetailedAnalysis from "@/components/feedback/DetailedAnalysis";
 import SideBySideComparison from "@/components/feedback/SideBySideComparison";
 import QuickInsights from "@/components/feedback/QuickInsights";
 import LineByLineAnalysis from "@/components/feedback/LineByLineAnalysis";
+import CohesionAnalysis from "@/components/feedback/CohesionAnalysis";
+import VocabularyEnhancement from "@/components/feedback/VocabularyEnhancement";
+import GrammarImprovements from "@/components/feedback/GrammarImprovements";
 
 interface FeedbackDisplayProps {
   submission: WritingSubmission;
@@ -119,7 +123,7 @@ ${submission.feedback?.improvedText}
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -131,6 +135,18 @@ ${submission.feedback?.improvedText}
           <TabsTrigger value="errors" className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4" />
             <span className="hidden sm:inline">Errors</span>
+          </TabsTrigger>
+          <TabsTrigger value="cohesion" className="flex items-center gap-2">
+            <Link className="w-4 h-4" />
+            <span className="hidden sm:inline">Cohesion</span>
+          </TabsTrigger>
+          <TabsTrigger value="vocabulary" className="flex items-center gap-2">
+            <Type className="w-4 h-4" />
+            <span className="hidden sm:inline">Vocabulary</span>
+          </TabsTrigger>
+          <TabsTrigger value="grammar" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            <span className="hidden sm:inline">Grammar</span>
           </TabsTrigger>
           <TabsTrigger value="improvements" className="flex items-center gap-2">
             <Lightbulb className="w-4 h-4" />
@@ -171,6 +187,18 @@ ${submission.feedback?.improvedText}
             originalText={submission.text}
             markedErrors={submission.feedback.markedErrors}
           />
+        </TabsContent>
+
+        <TabsContent value="cohesion" className="space-y-4">
+          <CohesionAnalysis cohesionAnalysis={submission.feedback.cohesionAnalysis} />
+        </TabsContent>
+
+        <TabsContent value="vocabulary" className="space-y-4">
+          <VocabularyEnhancement vocabularyEnhancement={submission.feedback.vocabularyEnhancement} />
+        </TabsContent>
+
+        <TabsContent value="grammar" className="space-y-4">
+          <GrammarImprovements grammarImprovements={submission.feedback.grammarImprovements} />
         </TabsContent>
 
         <TabsContent value="improvements" className="space-y-4">
