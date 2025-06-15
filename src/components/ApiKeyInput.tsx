@@ -1,9 +1,9 @@
 
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Key, ExternalLink } from "lucide-react";
+import { CONFIG } from "@/lib/config";
 
 interface ApiKeyInputProps {
   onApiKeySet: (apiKey: string) => void;
@@ -11,12 +11,9 @@ interface ApiKeyInputProps {
 }
 
 const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
-  // Updated API key with the one provided by user
-  const HARDCODED_API_KEY = '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';
-
   // Set the API key on component mount
   useState(() => {
-    onApiKeySet(HARDCODED_API_KEY);
+    onApiKeySet(CONFIG.OPENROUTER_API_KEY);
   });
 
   return (

@@ -7,6 +7,7 @@ import { Loader2, Send, BookOpen, PenTool } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { WritingSubmission, AIFeedback } from "@/pages/Index";
 import { createDeepSeekPrompt, callDeepSeekAPI, parseDeepSeekResponse } from "@/lib/deepseek";
+import { CONFIG } from "@/lib/config";
 
 interface WritingEditorProps {
   onSubmissionComplete: (submission: WritingSubmission) => void;
@@ -18,9 +19,6 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
   const [question, setQuestion] = useState<string>('');
   const [writingMode, setWritingMode] = useState<'question' | 'free'>('question');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  // Updated API key with the one provided by user
-  const HARDCODED_API_KEY = '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';
 
   // Listen for selected prompts from localStorage
   useEffect(() => {
@@ -66,9 +64,9 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
     setIsAnalyzing(true);
 
     try {
-      console.log('Starting OpenRouter analysis with user provided key...');
+      console.log('Starting OpenRouter analysis with centralized API key...');
       const messages = createDeepSeekPrompt(text, 'IELTS');
-      const response = await callDeepSeekAPI(messages, HARDCODED_API_KEY);
+      const response = await callDeepSeekAPI(messages, CONFIG.OPENROUTER_API_KEY);
       console.log('OpenRouter response:', response);
       
       const parsedFeedback = parseDeepSeekResponse(response);
