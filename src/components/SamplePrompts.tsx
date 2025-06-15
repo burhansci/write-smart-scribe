@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Copy, ExternalLink, Search, Check, Loader2, Database, RefreshCw } from "lucide-react";
+import { BookOpen, Copy, ExternalLink, Search, Check, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { useQuery } from '@tanstack/react-query';
@@ -39,11 +38,10 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
   const [filter, setFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [usedQuestions, setUsedQuestions] = useState<string[]>([]);
-  const [isSeeding, setIsSeeding] = useState(false);
 
   const categories = ['ALL', 'Education', 'Environment', 'Technology', 'Media', 'Advertisement', 'Children', 'Young People', 'Old People', 'Social Issues', 'Family', 'Culture', 'Drugs', 'Health', 'Foreign Language', 'Ethical Issues', 'Building', 'Lifestyle', 'Others'];
 
-  const { data: rawPrompts = [], isLoading, isError, refetch } = useQuery({
+  const { data: rawPrompts = [], isLoading, isError } = useQuery({
     queryKey: ['sampleQuestions'],
     queryFn: fetchSampleQuestions,
   });
@@ -76,37 +74,6 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
   
-  const handleSeedQuestions = async (clear = false) => {
-    setIsSeeding(true);
-    toast({
-      title: "Seeding in progress...",
-      description: "Populating the database with sample questions. Please wait.",
-    });
-    try {
-      const { data, error } = await supabase.functions.invoke('seed-questions', {
-        body: { clear },
-      });
-
-      if (error) throw new Error(error.message);
-
-      if (data.error) throw new Error(data.error);
-      
-      toast({
-        title: "Success!",
-        description: data.message,
-      });
-      refetch(); // Refetch the questions
-    } catch (error: any) {
-      toast({
-        title: "Seeding failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
   const prompts = rawPrompts.map(prompt => ({
     id: prompt.id,
     category: prompt.category,
@@ -173,25 +140,6 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
             {filteredPrompts.length} questions available • {usedQuestions.length} completed
           </div>
         </div>
-
-        <Card className="p-4 bg-gray-50 border">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h3 className="font-semibold">Database Actions</h3>
-                    <p className="text-sm text-gray-600">Populate the database with sample questions.</p>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                    <Button onClick={() => handleSeedQuestions(false)} disabled={isSeeding} size="sm">
-                        {isSeeding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Database className="w-4 h-4 mr-2" />}
-                        Seed Questions
-                    </Button>
-                    <Button variant="outline" onClick={() => handleSeedQuestions(true)} disabled={isSeeding} size="sm">
-                        {isSeeding ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2"/>}
-                        Reset & Seed
-                    </Button>
-                </div>
-            </div>
-        </Card>
         
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
