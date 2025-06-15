@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, Copy, ExternalLink, Search, Check, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SamplePromptsProps {
@@ -38,6 +38,8 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
   const [filter, setFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [usedQuestions, setUsedQuestions] = useState<string[]>([]);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const queryClient = useQueryClient();
 
   const categories = ['ALL', 'Education', 'Environment', 'Technology', 'Media', 'Advertisement', 'Children', 'Young People', 'Old People', 'Social Issues', 'Family', 'Culture', 'Drugs', 'Health', 'Foreign Language', 'Ethical Issues', 'Building', 'Lifestyle', 'Others'];
 
@@ -73,6 +75,34 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  const handleSeedQuestions = async (clear: boolean = false) => {
+    setIsSeeding(true);
+    try {
+      const { data, error: functionError } = await supabase.functions.invoke('seed-questions', {
+        body: JSON.stringify({ clear }),
+      });
+
+      if (functionError) throw functionError;
+      
+      const result = data;
+      if (result.error) throw new Error(result.error);
+
+      toast({
+        title: "Database Seeding",
+        description: result.message || "Questions processed successfully.",
+      });
+      await queryClient.invalidateQueries({ queryKey: ['sampleQuestions'] });
+    } catch (error: any) {
+      toast({
+        title: "Seeding Failed",
+        description: error.message || "An unknown error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   const prompts = rawPrompts.map(prompt => ({
     id: prompt.id,
@@ -150,6 +180,16 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => handleSeedQuestions(false)} disabled={isSeeding || isLoading}>
+              {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Seed Questions
+            </Button>
+            <Button variant="outline" onClick={() => handleSeedQuestions(true)} disabled={isSeeding || isLoading}>
+              {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Reset & Seed
+            </Button>
           </div>
         </div>
 
