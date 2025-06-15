@@ -19,8 +19,8 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
   const [writingMode, setWritingMode] = useState<'question' | 'free'>('question');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Use the updated hardcoded API key
-  const HARDCODED_API_KEY = 'sk-or-v1-73c6a4c5595b245db69b12f28a65f818728d9ddded5234dd3232650159741d39hj';
+  // Updated API key to match the one in ApiKeyInput
+  const HARDCODED_API_KEY = 'sk-or-v1-d4c8f2e1a5b3c7f9e8d2a6b4c9f1e3d7a5b8c2f6e9d1a4b7c0f3e6d9a2b5c8f1e4d7';
 
   // Listen for selected prompts from localStorage
   useEffect(() => {
@@ -66,7 +66,7 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
     setIsAnalyzing(true);
 
     try {
-      console.log('Starting OpenRouter analysis...');
+      console.log('Starting OpenRouter analysis with updated key...');
       const messages = createDeepSeekPrompt(text, 'IELTS');
       const response = await callDeepSeekAPI(messages, HARDCODED_API_KEY);
       console.log('OpenRouter response:', response);
