@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,13 +55,13 @@ const ErrorHighlighter = ({ originalText, markedErrors }: ErrorHighlighterProps)
 
   const getErrorTypeColor = (type: string) => {
     const colors = {
-      'Grammar': 'bg-red-100 text-red-800 border-red-200',
-      'Vocabulary': 'bg-orange-100 text-orange-800 border-orange-200',
-      'Spelling': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'Word Choice': 'bg-purple-100 text-purple-800 border-purple-200',
-      'Subject-Verb Agreement': 'bg-pink-100 text-pink-800 border-pink-200'
+      'Grammar': 'bg-red-200 text-red-900 border-red-300',
+      'Vocabulary': 'bg-orange-200 text-orange-900 border-orange-300',
+      'Spelling': 'bg-yellow-200 text-yellow-900 border-yellow-300',
+      'Word Choice': 'bg-purple-200 text-purple-900 border-purple-300',
+      'Subject-Verb Agreement': 'bg-pink-200 text-pink-900 border-pink-300'
     };
-    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return colors[type as keyof typeof colors] || 'bg-gray-200 text-gray-900 border-gray-300';
   };
 
   const toggleCategory = (category: string) => {
@@ -96,7 +95,7 @@ const ErrorHighlighter = ({ originalText, markedErrors }: ErrorHighlighterProps)
       
       processedText = processedText.replace(regex, (matched) => {
         const colorClass = getErrorTypeColor(errorType.trim());
-        return `<span class="${colorClass} px-1 rounded border cursor-help" title="${errorType.trim()}: ${explanation.trim()}">${matched}</span>`;
+        return `<span class="${colorClass} px-2 py-1 rounded border-2 cursor-help font-medium shadow-sm" title="${errorType.trim()}: ${explanation.trim()}">${matched}</span>`;
       });
     });
 
@@ -183,7 +182,7 @@ const ErrorHighlighter = ({ originalText, markedErrors }: ErrorHighlighterProps)
                   {typeErrors.map((error, index) => (
                     <div key={index} className="bg-gray-50 p-3 rounded-lg border">
                       <div className="flex items-start gap-2">
-                        <span className={`px-2 py-1 rounded text-sm font-medium ${getErrorTypeColor(type)}`}>
+                        <span className={`px-3 py-1 rounded text-sm font-medium border-2 ${getErrorTypeColor(type)}`}>
                           "{error.text}"
                         </span>
                       </div>
