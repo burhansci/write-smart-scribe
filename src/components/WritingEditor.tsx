@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,7 +87,7 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
         lineByLineAnalysis: newSubmission.line_by_line_analysis || "",
         markedErrors: newSubmission.marked_errors || "",
         improvedText: newSubmission.improved_text || "",
-        band9Version: newSubmission.band_9_version || "",
+        band9Version: newSubmission.band9_version || "",
       },
       question: newSubmission.question || undefined,
     };
@@ -319,4 +318,3 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
 };
 
 export default WritingEditor;
-
