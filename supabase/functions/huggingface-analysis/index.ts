@@ -8,8 +8,8 @@ interface DeepSeekMessage {
 }
 
 const HUGGINGFACE_API_TOKEN = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
-// Using a more accessible model that should work with most HF tokens
-const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium';
+// Using a more accessible and reliable text generation model
+const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-large';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,12 +55,15 @@ serve(async (req) => {
       body: JSON.stringify({
         inputs: analysisPrompt,
         parameters: {
-          max_new_tokens: 800,
-          temperature: 0.3,
+          max_length: 1000,
+          temperature: 0.7,
+          top_p: 0.9,
+          do_sample: true,
           return_full_text: false,
         },
         options: {
           wait_for_model: true,
+          use_cache: false,
         }
       }),
     });
@@ -72,9 +75,10 @@ serve(async (req) => {
       console.error('HF API Error:', errorText);
       
       // Handle specific error cases
-      if (response.status === 403) {
+      if (response.status === 403 || response.status === 404) {
+        console.warn('Model access denied or not found, using fallback analysis');
         return new Response(JSON.stringify({ 
-          error: 'Access denied to the AI model. This could be due to token permissions or model restrictions. The analysis will try to continue with a basic response.',
+          error: 'AI model temporarily unavailable. Providing basic analysis.',
           fallback: true 
         }), {
           status: 503,
@@ -84,17 +88,35 @@ serve(async (req) => {
       
       return new Response(JSON.stringify({ 
         error: `Hugging Face API error (${response.status}): ${errorText}`,
-        estimated_time: 20 
+        estimated_time: 20,
+        fallback: true 
       }), {
         status: response.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const responseBody = await response.text();
-    console.log('HF Response received, length:', responseBody.length);
+    const responseData = await response.json();
+    console.log('HF Response received:', responseData);
     
-    return new Response(responseBody, {
+    // Handle different response formats
+    let generatedText = '';
+    if (Array.isArray(responseData) && responseData.length > 0) {
+      generatedText = responseData[0].generated_text || '';
+    } else if (responseData.generated_text) {
+      generatedText = responseData.generated_text;
+    } else {
+      console.warn('Unexpected response format, using fallback');
+      return new Response(JSON.stringify([{ 
+        generated_text: '',
+        fallback: true 
+      }]), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify([{ generated_text: generatedText }]), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
