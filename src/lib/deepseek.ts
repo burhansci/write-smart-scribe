@@ -1,4 +1,3 @@
-
 // OpenRouter API configuration and client
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -84,6 +83,35 @@ Show 3-5 specific improvements using these markers:
 Example: "The economy [+has been significantly+] affected. [~Very~] [+Numerous+] people [+have become+] unemployed [+as a direct consequence+]."
 
 Keep suggestions practical and immediately applicable. Focus on improvements that raise the band score.
+
+**Cohesion Analysis**
+Analyze cohesive devices and flow improvements:
+BEFORE→AFTER examples:
+• "[original phrase]" → "[improved phrase with cohesive device]" (Reason: [explanation])
+• "[original transition]" → "[sophisticated linking]" (Reason: [explanation])
+• "[original flow]" → "[improved logical sequence]" (Reason: [explanation])
+
+Focus on: linking words, paragraph transitions, logical connectors, referencing, substitution.
+
+**Vocabulary Enhancement**
+Show specific vocabulary and phrasing improvements:
+BASIC→SOPHISTICATED examples:
+• "[simple word]" → "[advanced vocabulary]" (Academic register improvement)
+• "[informal phrase]" → "[formal academic phrase]" (Register enhancement)
+• "[weak collocation]" → "[strong collocation]" (Natural academic usage)
+• "[repetitive word]" → "[varied synonym]" (Lexical variety)
+
+Focus on: academic vocabulary, collocations, register, word families, precision.
+
+**Grammar Improvements**
+Highlight specific grammatical enhancements:
+SIMPLE→COMPLEX examples:
+• "[basic sentence]" → "[complex structure]" (Grammatical sophistication)
+• "[simple tense]" → "[advanced tense/aspect]" (Temporal precision)
+• "[basic conjunction]" → "[sophisticated connector]" (Syntactic variety)
+• "[repetitive structure]" → "[varied sentence pattern]" (Structural diversity)
+
+Focus on: sentence variety, complex structures, advanced grammar, error corrections.
 
 **Band 9 Version**
 YOU MUST PROVIDE A COMPLETE BAND 9 REWRITE - THIS IS MANDATORY AND REQUIRED.
@@ -222,6 +250,9 @@ export const parseDeepSeekResponse = (response: string) => {
   let markedErrors = '';
   let improvedText = '';
   let band9Version = '';
+  let cohesionAnalysis = '';
+  let vocabularyEnhancement = '';
+  let grammarImprovements = '';
 
   for (let i = 0; i < sections.length; i++) {
     const sectionHeader = sections[i].toLowerCase();
@@ -241,6 +272,12 @@ export const parseDeepSeekResponse = (response: string) => {
       markedErrors = sectionContent.trim();
     } else if (sectionHeader.includes('improved') || sectionHeader.includes('suggestions')) {
       improvedText = sectionContent.trim();
+    } else if (sectionHeader.includes('cohesion') && sectionHeader.includes('analysis')) {
+      cohesionAnalysis = sectionContent.trim();
+    } else if (sectionHeader.includes('vocabulary') && sectionHeader.includes('enhancement')) {
+      vocabularyEnhancement = sectionContent.trim();
+    } else if (sectionHeader.includes('grammar') && sectionHeader.includes('improvements')) {
+      grammarImprovements = sectionContent.trim();
     } else if (sectionHeader.includes('band 9') || sectionHeader.includes('band9')) {
       band9Version = sectionContent.trim();
     }
@@ -268,6 +305,19 @@ export const parseDeepSeekResponse = (response: string) => {
     improvedText = `${markedErrors} [+Additionally,+]{Add linking words} [+sophisticated+]{Use varied vocabulary} [+In conclusion,+]{Strong concluding phrases}`;
   }
 
+  // Fallbacks for new sections
+  if (!cohesionAnalysis) {
+    cohesionAnalysis = 'Focus on adding linking words like "Furthermore," "Nevertheless," and "Consequently" to improve flow between sentences and paragraphs.';
+  }
+
+  if (!vocabularyEnhancement) {
+    vocabularyEnhancement = 'Replace basic vocabulary with more sophisticated alternatives. For example: "good" → "exemplary", "important" → "paramount", "show" → "demonstrate".';
+  }
+
+  if (!grammarImprovements) {
+    grammarImprovements = 'Incorporate complex sentence structures, varied sentence patterns, and advanced grammatical forms to demonstrate linguistic sophistication.';
+  }
+
   // ROBUST BAND 9 FALLBACK - NEVER return "not available"
   if (!band9Version || band9Version.length < 100 || band9Version.toLowerCase().includes('not available')) {
     console.log('Generating robust Band 9 fallback...');
@@ -289,6 +339,9 @@ export const parseDeepSeekResponse = (response: string) => {
     lineByLineAnalysis: lineByLineAnalysis.substring(0, 100),
     markedErrors: markedErrors.substring(0, 100), 
     improvedText: improvedText.substring(0, 100),
+    cohesionAnalysis: cohesionAnalysis.substring(0, 100),
+    vocabularyEnhancement: vocabularyEnhancement.substring(0, 100),
+    grammarImprovements: grammarImprovements.substring(0, 100),
     band9Version: band9Version.substring(0, 100)
   });
 
@@ -298,6 +351,9 @@ export const parseDeepSeekResponse = (response: string) => {
     lineByLineAnalysis: lineByLineAnalysis,
     markedErrors: markedErrors || 'No errors marked',
     improvedText: improvedText,
+    cohesionAnalysis: cohesionAnalysis,
+    vocabularyEnhancement: vocabularyEnhancement,
+    grammarImprovements: grammarImprovements,
     band9Version: band9Version
   };
 };
