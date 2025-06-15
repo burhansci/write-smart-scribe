@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,14 +44,17 @@ const SamplePrompts = ({ onSelectPrompt }: SamplePromptsProps) => {
   const { data: rawPrompts = [], isLoading, isError } = useQuery({
     queryKey: ['sampleQuestions'],
     queryFn: fetchSampleQuestions,
-    onError: () => {
+  });
+
+  useEffect(() => {
+    if (isError) {
       toast({
         title: "Error loading questions",
         description: "Could not fetch sample questions from the database.",
         variant: "destructive",
       });
-    },
-  });
+    }
+  }, [isError]);
 
   // Load used questions from localStorage
   useEffect(() => {
