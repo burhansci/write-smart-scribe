@@ -13,7 +13,7 @@ interface ApiKeyInputProps {
 const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
   // Set the API key on component mount
   useState(() => {
-    onApiKeySet(CONFIG.OPENROUTER_API_KEY);
+    onApiKeySet(CONFIG.DEEPSEEK_API_KEY);
   });
 
   return (
@@ -21,20 +21,20 @@ const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Key className="w-5 h-5" />
-          OpenRouter API Configuration
+          DeepSeek API Configuration
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <AlertDescription>
-            OpenRouter API is configured and ready to use. Powered by{' '}
+            DeepSeek API is configured and ready to use. Powered by{' '}
             <a 
-              href="https://openrouter.ai/" 
+              href="https://platform.deepseek.com/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline inline-flex items-center gap-1"
             >
-              openrouter.ai
+              platform.deepseek.com
               <ExternalLink className="w-3 h-3" />
             </a>
           </AlertDescription>
