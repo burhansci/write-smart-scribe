@@ -1,13 +1,13 @@
 
 import { DeepSeekMessage, DeepSeekResponse } from './types';
 
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: string): Promise<string> => {
-  console.log('Making DeepSeek API call with key:', apiKey.substring(0, 20) + '...');
+  console.log('Making OpenRouter API call with key:', apiKey.substring(0, 20) + '...');
   
   const requestBody = {
-    model: 'deepseek-chat',
+    model: 'deepseek/deepseek-chat',
     messages,
     temperature: 0.3,
     max_tokens: 3800,
@@ -15,7 +15,7 @@ export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: strin
 
   console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
-  const response = await fetch(DEEPSEEK_API_URL, {
+  const response = await fetch(OPENROUTER_API_URL, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -30,7 +30,7 @@ export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: strin
   if (!response.ok) {
     const errorText = await response.text();
     console.error('API Error Response:', errorText);
-    throw new Error(`DeepSeek API error: ${response.status} ${response.statusText} - ${errorText}`);
+    throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   const data: DeepSeekResponse = await response.json();

@@ -64,10 +64,10 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
     setIsAnalyzing(true);
 
     try {
-      console.log('Starting DeepSeek analysis with centralized API key...');
+      console.log('Starting OpenRouter analysis with centralized API key...');
       const messages = createDeepSeekPrompt(text, 'IELTS');
-      const response = await callDeepSeekAPI(messages, CONFIG.DEEPSEEK_API_KEY);
-      console.log('DeepSeek response:', response);
+      const response = await callDeepSeekAPI(messages, CONFIG.OPENROUTER_API_KEY);
+      console.log('OpenRouter response:', response);
       
       const parsedFeedback = parseDeepSeekResponse(response);
       console.log('Parsed feedback:', parsedFeedback);
@@ -114,7 +114,7 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
       });
 
     } catch (error) {
-      console.error('DeepSeek analysis error:', error);
+      console.error('OpenRouter analysis error:', error);
       toast({
         title: "Analysis Error",
         description: error instanceof Error ? error.message : "Failed to analyze your writing. Please try again.",
