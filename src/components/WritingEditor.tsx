@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,8 +19,8 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
   const [writingMode, setWritingMode] = useState<'question' | 'free'>('question');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Use the hardcoded API key
-  const HARDCODED_API_KEY = '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';
+  // Use environment variable for API key
+  const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
   // Listen for selected prompts from localStorage
   useEffect(() => {
@@ -64,12 +63,21 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
       return;
     }
 
+    if (!API_KEY) {
+      toast({
+        title: "Configuration Error",
+        description: "OpenRouter API key is not configured. Please add VITE_OPENROUTER_API_KEY to your environment variables.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsAnalyzing(true);
 
     try {
       console.log('Starting OpenRouter analysis...');
       const messages = createDeepSeekPrompt(text, 'IELTS');
-      const response = await callDeepSeekAPI(messages, HARDCODED_API_KEY);
+      const response = await callDeepSeekAPI(messages, API_KEY);
       console.log('OpenRouter response:', response);
       
       const parsedFeedback = parseDeepSeekResponse(response);
