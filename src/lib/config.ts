@@ -1,5 +1,5 @@
 
 // Central configuration for API keys and settings
 export const CONFIG = {
-  OPENROUTER_API_KEY: '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'
+  OPENROUTER_API_KEY: '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'
 };
