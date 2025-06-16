@@ -11,7 +11,7 @@ interface ApiKeyInputProps {
 
 const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
   // Use the hardcoded API key
-  const HARDCODED_API_KEY = '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';
+  const HARDCODED_API_KEY = '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';
 
   // Set the API key on component mount
   useState(() => {
