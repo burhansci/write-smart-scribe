@@ -1,4 +1,5 @@
 
+
 import { OpenAI } from "openai";
 
 // OpenRouter API configuration and client
@@ -7,7 +8,8 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 // Kluster AI configuration
 const client = new OpenAI({
   apiKey: "b5a3b313-78b2-4b41-9704-d3b012ffb24d",
-  baseURL: "https://api.kluster.ai/v1"
+  baseURL: "https://api.kluster.ai/v1",
+  dangerouslyAllowBrowser: true
 });
 
 export interface DeepSeekMessage {
