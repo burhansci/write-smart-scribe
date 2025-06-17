@@ -1,9 +1,4 @@
-
-
 import { OpenAI } from "openai";
-
-// OpenRouter API configuration and client
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Kluster AI configuration
 const client = new OpenAI({
@@ -136,12 +131,12 @@ IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each sugg
   ];
 };
 
-export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
+export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: string): Promise<string> => {
   const response = await client.chat.completions.create({
-    model: "deepseek-ai/DeepSeek-V3-0324",
+    model: 'deepseek-ai/DeepSeek-V3-0324',
     messages: messages,
     temperature: 0.3,
-    max_tokens: 4000,
+    max_tokens: 4000, // Increased to ensure complete responses
   });
 
   return response.choices[0]?.message?.content || 'No response received';
