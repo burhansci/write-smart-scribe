@@ -10,8 +10,8 @@ interface ApiKeyInputProps {
 }
 
 const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
-  // Use the hardcoded API key
-  const HARDCODED_API_KEY = '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';
+  // Use the hardcoded Kluster AI API key
+  const HARDCODED_API_KEY = 'b5a3b313-78b2-4b41-9704-d3b012ffb24d';
 
   // Set the API key on component mount
   useState(() => {
@@ -23,27 +23,27 @@ const ApiKeyInput = ({ onApiKeySet, currentApiKey }: ApiKeyInputProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Key className="w-5 h-5" />
-          OpenRouter API Configuration
+          Kluster AI Configuration
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
           <AlertDescription>
-            OpenRouter API is configured and ready to use. Powered by{' '}
+            Kluster AI is configured and ready to use. Powered by{' '}
             <a 
-              href="https://openrouter.ai/" 
+              href="https://api.kluster.ai/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline inline-flex items-center gap-1"
             >
-              openrouter.ai
+              kluster.ai
               <ExternalLink className="w-3 h-3" />
             </a>
           </AlertDescription>
         </Alert>
 
         <div className="text-sm text-green-600">
-          ✓ API key configured and ready to use
+          ✓ API key configured and ready to use with DeepSeek-V3 model
         </div>
       </CardContent>
     </Card>

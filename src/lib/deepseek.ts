@@ -1,6 +1,6 @@
 import { OpenAI } from "openai";
 
-// Kluster AI configuration
+// Kluster AI configuration with R1 model
 const client = new OpenAI({
   apiKey: "b5a3b313-78b2-4b41-9704-d3b012ffb24d",
   baseURL: "https://api.kluster.ai/v1",
@@ -54,32 +54,6 @@ Specific Suggestions:
 • Change "[exact original phrase]" to "[suggested improvement]" → Reason: [academic writing improvement]
 Priority: [High/Medium/Low based on band score impact]
 
-Example format:
-Line 1: "The students is studying very hard for they exam."
-Specific Issues:
-• Grammar: "students is" → Issue: Subject-verb disagreement (plural subject needs plural verb)
-• Spelling: "they exam" → Issue: Incorrect pronoun usage (should be possessive "their")
-• Word Choice: "very hard" → Issue: Too informal for academic writing
-Specific Suggestions:
-• Replace "students is" with "students are" → Reason: Correct subject-verb agreement improves grammatical accuracy
-• Change "they exam" to "their examination" → Reason: Correct possessive form and more formal vocabulary
-• Replace "very hard" with "diligently" → Reason: More sophisticated vocabulary for higher band score
-Priority: High
-
-Be extremely specific - identify exact words, phrases, and provide detailed explanations for each issue.
-
-**Marked Errors**
-Identify 5-8 critical errors that impact the band score. Use this exact format:
-[error_text]{ErrorType: Specific correction}
-
-Examples:
-[don't have]{Subject-Verb Agreement: Use "doesn't have"}
-[very good]{Word Choice: Use "excellent" for academic writing}
-[alot]{Spelling: Should be "a lot"}
-[In conclusion of]{Grammar: Use "In conclusion," or "To conclude,"}
-
-Focus on errors that will make the biggest impact on band score improvement.
-
 **Improved with Suggestions**
 Show 3-5 specific improvements using these markers:
 - [+word/phrase+] for additions that improve clarity/flow
@@ -131,12 +105,12 @@ IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each sugg
   ];
 };
 
-export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: string): Promise<string> => {
+export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
   const response = await client.chat.completions.create({
-    model: 'deepseek-ai/DeepSeek-V3-0324',
+    model: "deepseek-ai/DeepSeek-V3-0324",
     messages: messages,
     temperature: 0.3,
-    max_tokens: 4000, // Increased to ensure complete responses
+    max_tokens: 4000,
   });
 
   return response.choices[0]?.message?.content || 'No response received';
@@ -209,7 +183,6 @@ export const parseDeepSeekResponse = (response: string) => {
   let score = '';
   let explanation = '';
   let lineByLineAnalysis = '';
-  let markedErrors = '';
   let improvedText = '';
   let band9Version = '';
 
@@ -227,8 +200,6 @@ export const parseDeepSeekResponse = (response: string) => {
       explanation = sectionContent.trim();
     } else if (sectionHeader.includes('line-by-line') || sectionHeader.includes('line by line')) {
       lineByLineAnalysis = sectionContent.trim();
-    } else if (sectionHeader.includes('marked') && sectionHeader.includes('error')) {
-      markedErrors = sectionContent.trim();
     } else if (sectionHeader.includes('improved') || sectionHeader.includes('suggestions')) {
       improvedText = sectionContent.trim();
     } else if (sectionHeader.includes('band 9') || sectionHeader.includes('band9')) {
@@ -249,13 +220,9 @@ export const parseDeepSeekResponse = (response: string) => {
     lineByLineAnalysis = 'Line-by-line analysis not available in this response.';
   }
   
-  if (!markedErrors) {
-    markedErrors = 'No specific errors marked in this analysis.';
-  }
-  
   if (!improvedText || improvedText.length < 50) {
     console.log('Generating fallback improvements...');
-    improvedText = `${markedErrors} [+Additionally,+]{Add linking words} [+sophisticated+]{Use varied vocabulary} [+In conclusion,+]{Strong concluding phrases}`;
+    improvedText = `[+Additionally,+]{Add linking words} [+sophisticated+]{Use varied vocabulary} [+In conclusion,+]{Strong concluding phrases}`;
   }
 
   // ROBUST BAND 9 FALLBACK - NEVER return "not available"
@@ -277,7 +244,6 @@ export const parseDeepSeekResponse = (response: string) => {
     score, 
     explanation: explanation.substring(0, 100), 
     lineByLineAnalysis: lineByLineAnalysis.substring(0, 100),
-    markedErrors: markedErrors.substring(0, 100), 
     improvedText: improvedText.substring(0, 100),
     band9Version: band9Version.substring(0, 100)
   });
@@ -286,7 +252,7 @@ export const parseDeepSeekResponse = (response: string) => {
     score: score || '6.0',
     explanation: explanation || 'Analysis completed',
     lineByLineAnalysis: lineByLineAnalysis,
-    markedErrors: markedErrors || 'No errors marked',
+    markedErrors: '', // Removed as requested
     improvedText: improvedText,
     band9Version: band9Version
   };
