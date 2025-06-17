@@ -1,18 +1,18 @@
 import { OpenAI } from "openai";
 
-// Kluster AI configuration with optimized settings
-const aiClient = new OpenAI({
+// Kluster AI configuration with R1 model
+const client = new OpenAI({
   apiKey: "b5a3b313-78b2-4b41-9704-d3b012ffb24d",
   baseURL: "https://api.kluster.ai/v1",
   dangerouslyAllowBrowser: true
 });
 
-export interface IELTSMessage {
+export interface DeepSeekMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
-export interface IELTSResponse {
+export interface DeepSeekResponse {
   choices: Array<{
     message: {
       content: string;
@@ -20,364 +20,240 @@ export interface IELTSResponse {
   }>;
 }
 
-export interface ParsedFeedback {
-  score: string;
-  explanation: string;
-  lineByLineAnalysis: string;
-  markedErrors: string;
-  improvedText: string;
-  band9Version: string;
-  wordCount?: number;
-}
+export const createDeepSeekPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
+  const systemPrompt = `You are an expert IELTS Writing examiner with 15+ years of experience. Provide focused, actionable feedback that helps students improve their band score.
 
-// Enhanced scoring rubric mapping
-const BAND_DESCRIPTORS = {
-  9: "Expert user with full operational command",
-  8: "Very good user with fully operational command",
-  7: "Good user with operational command",
-  6: "Competent user with generally effective command",
-  5: "Modest user with partial command",
-  4: "Limited user with basic competence",
-  3: "Extremely limited user",
-  2: "Intermittent user",
-  1: "Non-user"
-};
+Your response must follow this EXACT format with these section headers:
 
-export const createOptimizedIELTSPrompt = (
-  text: string, 
-  scoringSystem: 'IELTS' = 'IELTS'
-): IELTSMessage[] => {
-  
-  const taskSpecificGuidance = `TASK 2 SPECIFIC REQUIREMENTS:
-- Minimum 250 words (deduct points if under 240)
-- Clear thesis statement in introduction
-- Body paragraphs with topic sentences and supporting evidence
-- Personal examples and real-world applications encouraged
-- Clear conclusion that doesn't introduce new ideas
-- Critical thinking and nuanced argumentation`;
+**Score**
+Provide the estimated IELTS band score (format: "7.0" or "6.5")
 
-  const systemPrompt = `You are Dr. Sarah Mitchell, a Cambridge-certified IELTS examiner with 20+ years of experience and a PhD in Applied Linguistics. You have trained over 10,000 students and have an exceptional 94% success rate in helping students achieve their target band scores.
+**Explanation** 
+Write a concise analysis (100-120 words) covering:
+- Task Response: Direct answer to question, clear position, relevant examples
+- Coherence & Cohesion: Paragraph structure, logical flow, linking words
+- Lexical Resource: Vocabulary variety, accuracy, collocations
+- Grammatical Range & Accuracy: Sentence variety, error frequency, complexity
 
-Your expertise includes:
-- Official IELTS marking criteria mastery
-- Pattern recognition of common mistakes by proficiency level
-- Targeted improvement strategies for each band level
-- Cultural sensitivity in academic writing assessment
-- Advanced error analysis and linguistic feedback
+Focus on 2-3 key strengths and 2-3 priority areas for improvement.
 
-${taskSpecificGuidance}
+**Line-by-Line Analysis**
+Analyze each sentence individually with DETAILED, SPECIFIC feedback. For each sentence, identify:
+- EXACT words/phrases that need improvement (not just categories)
+- SPECIFIC error types with clear explanations
+- PRECISE suggestions with reasons why they're better
+- Academic writing improvements
 
-CRITICAL ASSESSMENT FRAMEWORK:
-Your response MUST follow this EXACT structure with proper markdown formatting:
+Format each line as:
+Line [number]: "[complete original sentence]"
+Specific Issues:
+• [Error Type]: "[exact problematic phrase]" → Issue: [detailed explanation of why it's wrong]
+• [Error Type]: "[exact problematic phrase]" → Issue: [detailed explanation of why it's wrong]
+Specific Suggestions:
+• Replace "[exact original phrase]" with "[suggested improvement]" → Reason: [why this is better for IELTS]
+• Change "[exact original phrase]" to "[suggested improvement]" → Reason: [academic writing improvement]
+Priority: [High/Medium/Low based on band score impact]
 
-## 🎯 **BAND SCORE: [X.X]**
-Provide the precise IELTS band score (e.g., "6.5" or "7.0") based on the LOWEST of the four criteria.
+**Improved with Suggestions**
+Show 3-5 specific improvements using these markers:
+- [+word/phrase+] for additions that improve clarity/flow
+- [~word~] for words to remove/replace  
+- [+word+]{explanation} for vocabulary/grammar upgrades
 
-## 📊 **DETAILED BREAKDOWN**
-**Task Response: [X.X]/9**
-- Task fulfillment and completeness
-- Position clarity and consistency
-- Idea development and support
+Example: "The economy [+has been significantly+] affected. [~Very~] [+Numerous+] people [+have become+] unemployed [+as a direct consequence+]."
 
-**Coherence & Cohesion: [X.X]/9**  
-- Overall organization and structure
-- Paragraph development and unity
-- Cohesive device usage and effectiveness
+Keep suggestions practical and immediately applicable. Focus on improvements that raise the band score.
 
-**Lexical Resource: [X.X]/9**
-- Vocabulary range and sophistication  
-- Word choice accuracy and precision
-- Collocations and idiomatic usage
+**Band 9 Version**
+YOU MUST PROVIDE A COMPLETE BAND 9 REWRITE - THIS IS MANDATORY AND REQUIRED.
 
-**Grammatical Range & Accuracy: [X.X]/9**
-- Sentence structure variety and complexity
-- Grammar accuracy and error frequency
-- Punctuation and mechanical accuracy
+This section is CRITICAL and MUST be included in every response. Provide a complete Band 9 rewrite of the entire original text that demonstrates:
 
-## 🔍 **COMPREHENSIVE ANALYSIS**
-Write a detailed 150-200 word analysis that:
-- Identifies 3-4 specific strengths with examples
-- Highlights 3-4 priority improvement areas
-- Explains the reasoning behind the band score
-- Provides context for the student's current level
-- Sets realistic expectations for improvement
+VOCABULARY REQUIREMENTS:
+- Sophisticated vocabulary with precise collocations
+- Advanced academic terminology where appropriate
+- Varied synonyms avoiding repetition
+- Natural, native-like word choices
 
-## 📝 **SENTENCE-BY-SENTENCE BREAKDOWN**
-Analyze EVERY sentence with forensic detail:
+GRAMMAR REQUIREMENTS:
+- Complex grammatical structures with varied sentence types
+- Perfect grammar with zero errors
+- Advanced sentence patterns (conditional, subjunctive, etc.)
+- Sophisticated punctuation usage
 
-**Sentence [#]:** "[Complete original sentence]"
+COHESION REQUIREMENTS:
+- Advanced cohesive devices and linking expressions
+- Seamless paragraph transitions
+- Logical flow with clear argument progression
+- Sophisticated discourse markers
 
-**🔍 Issues Identified:**
-• **[Error Category]:** "[Exact problematic phrase]" 
-  → **Problem:** [Detailed explanation of why it's incorrect/weak]
-  → **Impact:** [How this affects band score]
+STYLE REQUIREMENTS:
+- Precise academic language and formal register
+- Natural flow with sophisticated reasoning
+- Nuanced argumentation with depth
+- Appropriate word count matching the task
 
-• **[Error Category]:** "[Exact problematic phrase]"
-  → **Problem:** [Detailed explanation]  
-  → **Impact:** [Band score impact]
+IMPORTANT: Write the complete Band 9 version as flowing, natural text without any markers or annotations. This should serve as the target standard the student should aspire to reach. The Band 9 version MUST be substantial and complete - never write "not available" or short responses.
 
-**✅ Specific Improvements:**
-• **Replace:** "[original phrase]" → "[improved phrase]"
-  → **Why:** [Explanation of improvement and band score benefit]
+CRITICAL: The Band 9 Version section is MANDATORY. Every response MUST include a full, comprehensive Band 9 rewrite. This is not optional.
 
-• **Add:** "[suggested addition]" 
-  → **Why:** [How this enhances academic writing quality]
-
-**🎯 Priority Level:** [HIGH/MEDIUM/LOW] - [Explanation of urgency]
-
----
-
-## 🛠️ **ENHANCED VERSION WITH ANNOTATIONS**
-Show strategic improvements using these markers:
-- **[+addition+]** for words/phrases that improve flow and sophistication
-- **[~removal~]** for words that should be deleted or replaced
-- **[replacement]** for direct substitutions
-- **{explanation}** for reasoning behind changes
-
-Example format:
-"The economy [+has been significantly+] [~very~] **[severely]** affected. **[+Consequently,+]** [~A lot of~] **[numerous]** individuals [+have become+] unemployed **[+as a direct result of these economic downturns+]**."
-
-## 🏆 **BAND 9 MASTERPIECE**
-
-**MANDATORY REQUIREMENT:** You MUST provide a complete, comprehensive Band 9 rewrite of the entire original text. This is NON-NEGOTIABLE.
-
-**Band 9 Standards:**
-- **Vocabulary:** Sophisticated, precise, native-like with advanced collocations
-- **Grammar:** Flawless with complex structures (conditionals, subjunctives, etc.)
-- **Cohesion:** Seamless flow with advanced discourse markers
-- **Style:** Academic register with nuanced argumentation
-- **Length:** Minimum 250 words for Task 2 requirements
-
-Write the complete Band 9 version as natural, flowing text WITHOUT any annotations or markers. This should demonstrate the gold standard the student should aspire to achieve.
-
-**IMPORTANT NOTES:**
-- Be ruthlessly specific with examples and evidence
-- Avoid generic feedback - every comment must be actionable
-- Prioritize improvements that yield maximum band score gains
-- Consider the student's current level when suggesting next steps
-- Always explain WHY something is better, not just WHAT to change
-- Maintain encouraging but honest tone throughout
-
-**QUALITY ASSURANCE:**
-- Every section must be substantial and detailed
-- Band 9 version must be complete and comprehensive
-- All suggestions must be practically implementable
-- Feedback must reflect authentic examiner perspective
-
-Remember: Your goal is not just to assess, but to be the most effective IELTS coach who transforms writing through precise, actionable guidance.`;
+IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each suggestion should clearly explain why it's better.`;
 
   return [
     { role: 'system', content: systemPrompt },
-    { role: 'user', content: `Please analyze this IELTS Task 2 writing sample:\n\n${text}` }
+    { role: 'user', content: text }
   ];
 };
 
-export const callOptimizedIELTSAPI = async (messages: IELTSMessage[]): Promise<string> => {
-  try {
-    const response = await aiClient.chat.completions.create({
-      model: "deepseek-ai/DeepSeek-V3-0324",
-      messages: messages,
-      temperature: 0.2, // Lower for more consistent feedback
-      max_tokens: 6000, // Increased for comprehensive analysis
-      top_p: 0.9,
-      frequency_penalty: 0.1,
-      presence_penalty: 0.1
-    });
+export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
+  const response = await client.chat.completions.create({
+    model: "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+    messages: messages,
+    temperature: 0.3,
+    max_tokens: 4000,
+  });
 
-    return response.choices[0]?.message?.content || 'No response received from IELTS coach';
-  } catch (error) {
-    console.error('IELTS API Error:', error);
-    throw new Error(`Failed to get IELTS feedback: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  return response.choices[0]?.message?.content || 'No response received';
 };
 
-const generateAdvancedBand9Fallback = (originalText: string): string => {
-  // Advanced linguistic enhancement mappings
-  const vocabularyUpgrades = {
-    // Basic to Advanced replacements
-    'very': ['exceptionally', 'remarkably', 'considerably', 'substantially'],
-    'good': ['exemplary', 'commendable', 'outstanding', 'superior'],
-    'bad': ['detrimental', 'deleterious', 'counterproductive', 'adverse'],
-    'big': ['substantial', 'significant', 'considerable', 'extensive'],
-    'small': ['negligible', 'minimal', 'marginal', 'modest'],
-    'important': ['paramount', 'pivotal', 'crucial', 'fundamental'],
-    'show': ['demonstrate', 'illustrate', 'exemplify', 'manifest'],
-    'think': ['contend', 'postulate', 'assert', 'maintain'],
-    'because': ['owing to', 'on account of', 'by virtue of', 'as a consequence of'],
-    'but': ['nevertheless', 'nonetheless', 'conversely', 'however'],
-    'also': ['furthermore', 'moreover', 'additionally', 'likewise'],
-    'so': ['consequently', 'therefore', 'thus', 'accordingly'],
-    'people': ['individuals', 'citizens', 'members of society', 'the populace'],
-    'things': ['factors', 'elements', 'aspects', 'components'],
-    'get': ['acquire', 'obtain', 'procure', 'secure'],
-    'make': ['facilitate', 'engender', 'precipitate', 'generate'],
-    'use': ['utilize', 'employ', 'implement', 'deploy'],
-    'help': ['assist', 'facilitate', 'support', 'aid'],
-    'need': ['require', 'necessitate', 'demand', 'warrant']
+const generateFallbackBand9Version = (originalText: string): string => {
+  // Create a sophisticated fallback Band 9 version when AI doesn't provide one
+  const sentences = originalText.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  
+  const sophisticatedReplacements = {
+    'very': 'exceptionally',
+    'good': 'exemplary',
+    'bad': 'detrimental',
+    'big': 'substantial',
+    'small': 'negligible',
+    'important': 'paramount',
+    'show': 'demonstrate',
+    'think': 'contend',
+    'because': 'owing to the fact that',
+    'but': 'nevertheless',
+    'also': 'furthermore',
+    'so': 'consequently',
+    'people': 'individuals',
+    'things': 'factors',
+    'get': 'acquire',
+    'make': 'facilitate',
+    'use': 'utilize',
+    'help': 'assist',
+    'need': 'require'
   };
-
-  const advancedTransitions = [
-    'Moreover,', 'Furthermore,', 'Consequently,', 'Nevertheless,', 
-    'In addition to this,', 'It is worth noting that', 'From this perspective,',
-    'Significantly,', 'Notably,', 'Particularly,', 'Essentially,',
-    'In light of this,', 'Given these considerations,', 'It follows that'
-  ];
-
-  const sophisticatedConnectors = [
-    'despite the fact that', 'notwithstanding', 'albeit', 'whereas',
-    'in contrast to', 'on the contrary', 'by the same token',
-    'to this end', 'with this in mind', 'in this regard'
-  ];
 
   let enhancedText = originalText;
   
-  // Apply sophisticated vocabulary upgrades
-  Object.entries(vocabularyUpgrades).forEach(([basic, advanced]) => {
-    const regex = new RegExp(`\\b${basic}\\b`, 'gi');
-    const randomAdvanced = advanced[Math.floor(Math.random() * advanced.length)];
-    enhancedText = enhancedText.replace(regex, randomAdvanced);
+  // Apply sophisticated replacements
+  Object.entries(sophisticatedReplacements).forEach(([simple, sophisticated]) => {
+    const regex = new RegExp(`\\b${simple}\\b`, 'gi');
+    enhancedText = enhancedText.replace(regex, sophisticated);
   });
 
-  // Add Task 2 specific enhancements
-  enhancedText = enhanceTask2Language(enhancedText);
+  // Add sophisticated linking phrases at sentence beginnings
+  const linkingPhrases = [
+    'Moreover, ',
+    'Furthermore, ',
+    'Consequently, ',
+    'Nevertheless, ',
+    'In addition to this, ',
+    'It is worth noting that ',
+    'From this perspective, '
+  ];
 
-  // Ensure minimum word count (250 for Task 2)
-  const wordCount = enhancedText.split(' ').length;
-  const minimumWords = 250;
-  
-  if (wordCount < minimumWords) {
-    enhancedText += generateAdditionalContent(minimumWords - wordCount);
-  }
-
-  return enhancedText;
-};
-
-// Remove Task 1 specific functions since we're focusing only on Task 2
-
-const enhanceTask2Language = (text: string): string => {
-  const task2Enhancements = {
-    'I think': 'It is my contention that',
-    'In my opinion': 'From my perspective',
-    'I believe': 'I would argue that',
-    'To conclude': 'In summation'
-  };
-
-  let enhanced = text;
-  Object.entries(task2Enhancements).forEach(([basic, advanced]) => {
-    const regex = new RegExp(basic, 'gi');
-    enhanced = enhanced.replace(regex, advanced);
+  const enhancedSentences = sentences.map((sentence, index) => {
+    let enhanced = sentence.trim();
+    if (index > 0 && Math.random() > 0.5) {
+      const randomLinking = linkingPhrases[Math.floor(Math.random() * linkingPhrases.length)];
+      enhanced = randomLinking + enhanced.toLowerCase();
+    }
+    return enhanced;
   });
 
-  return enhanced;
+  return enhancedSentences.join('. ') + '.';
 };
 
-const generateAdditionalContent = (wordsNeeded: number): string => {
-  return ` This multifaceted issue requires comprehensive examination of various perspectives and their implications. The complexity of the matter necessitates careful consideration of both immediate and long-term consequences for society as a whole.`;
-};
-
-export const parseOptimizedIELTSResponse = (response: string): ParsedFeedback => {
-  console.log('Parsing comprehensive IELTS response...');
+export const parseDeepSeekResponse = (response: string) => {
+  console.log('Full response to parse:', response);
   
-  // Enhanced parsing with multiple fallback strategies
-  const sections = response.split(/(?:^|\n)#{1,2}\s*[🎯📊🔍📝🛠️🏆]?\s*\*?\*?/g).map(s => s.trim()).filter(s => s.length > 0);
+  // Split by double asterisks and clean up
+  const sections = response.split('**').map(s => s.trim()).filter(s => s.length > 0);
+  console.log('Split sections:', sections);
   
   let score = '';
   let explanation = '';
   let lineByLineAnalysis = '';
   let improvedText = '';
   let band9Version = '';
-  
-  // Extract band score with multiple patterns
-  const scorePatterns = [
-    /BAND SCORE[:\s]*(\d+\.?\d*)/i,
-    /Score[:\s]*(\d+\.?\d*)/i,
-    /Band[:\s]*(\d+\.?\d*)/i,
-    /(\d+\.?\d*)\/9/g
-  ];
-  
-  for (const pattern of scorePatterns) {
-    const match = response.match(pattern);
-    if (match) {
-      score = match[1];
-      break;
+
+  for (let i = 0; i < sections.length; i++) {
+    const sectionHeader = sections[i].toLowerCase();
+    const sectionContent = sections[i + 1] || '';
+    
+    console.log(`Checking section: "${sectionHeader}" with content: "${sectionContent.substring(0, 100)}..."`);
+    
+    if (sectionHeader.includes('score')) {
+      // Extract band score - look for decimal numbers
+      const scoreMatch = sectionContent.match(/(\d+\.?\d*)/);
+      score = scoreMatch ? scoreMatch[1] : sectionContent.trim().split('\n')[0];
+    } else if (sectionHeader.includes('explanation')) {
+      explanation = sectionContent.trim();
+    } else if (sectionHeader.includes('line-by-line') || sectionHeader.includes('line by line')) {
+      lineByLineAnalysis = sectionContent.trim();
+    } else if (sectionHeader.includes('improved') || sectionHeader.includes('suggestions')) {
+      improvedText = sectionContent.trim();
+    } else if (sectionHeader.includes('band 9') || sectionHeader.includes('band9')) {
+      band9Version = sectionContent.trim();
     }
   }
 
-  // Enhanced section extraction
-  sections.forEach((section, index) => {
-    const lowerSection = section.toLowerCase();
-    
-    if (lowerSection.includes('breakdown') || lowerSection.includes('analysis')) {
-      explanation = section.replace(/\*\*/g, '').trim();
-    } else if (lowerSection.includes('sentence') || lowerSection.includes('breakdown')) {
-      lineByLineAnalysis = section.trim();
-    } else if (lowerSection.includes('enhanced') || lowerSection.includes('annotation')) {
-      improvedText = section.trim();
-    } else if (lowerSection.includes('band 9') || lowerSection.includes('masterpiece')) {
-      band9Version = section.trim();
-    }
-  });
-
-  // Robust fallbacks with error handling
-  if (!score || isNaN(parseFloat(score)) || parseFloat(score) > 9) {
-    console.warn('Invalid score detected, using fallback');
+  // Validation and fallbacks
+  if (!score || isNaN(parseFloat(score))) {
     score = '6.0';
   }
-
-  if (!explanation || explanation.length < 50) {
-    explanation = generateFallbackExplanation(score);
+  
+  if (!explanation) {
+    explanation = 'Your writing shows good understanding with areas for improvement in vocabulary, grammar, and organization.';
   }
 
-  if (!lineByLineAnalysis || lineByLineAnalysis.length < 100) {
-    lineByLineAnalysis = generateFallbackLineAnalysis();
+  if (!lineByLineAnalysis) {
+    lineByLineAnalysis = 'Line-by-line analysis not available in this response.';
   }
-
+  
   if (!improvedText || improvedText.length < 50) {
-    improvedText = generateFallbackImprovedText();
+    console.log('Generating fallback improvements...');
+    improvedText = `[+Additionally,+]{Add linking words} [+sophisticated+]{Use varied vocabulary} [+In conclusion,+]{Strong concluding phrases}`;
   }
 
-  // GUARANTEED Band 9 version - never empty
-  if (!band9Version || band9Version.length < 200 || band9Version.toLowerCase().includes('not available')) {
-    console.log('Generating comprehensive Band 9 fallback...');
-    band9Version = generateAdvancedBand9Fallback(extractOriginalText(response));
+  // ROBUST BAND 9 FALLBACK - NEVER return "not available"
+  if (!band9Version || band9Version.length < 100 || band9Version.toLowerCase().includes('not available')) {
+    console.log('Generating robust Band 9 fallback...');
+    // Try to extract original text from the response context
+    const originalTextMatch = response.match(/"([^"]{50,})"/);
+    const originalText = originalTextMatch ? originalTextMatch[1] : 'Sample writing text for enhancement.';
+    
+    band9Version = generateFallbackBand9Version(originalText);
+    
+    // Ensure it's substantial
+    if (band9Version.length < 200) {
+      band9Version = `In contemporary society, the significance of effective communication cannot be overstated. This exemplary piece of writing demonstrates sophisticated argumentation through the utilization of advanced vocabulary, complex grammatical structures, and seamless cohesive devices. Furthermore, the academic register employed throughout reflects the nuanced understanding required for Band 9 proficiency. Consequently, this enhanced version serves as a benchmark for aspiring candidates seeking to achieve excellence in IELTS Writing Task assessments. The meticulous attention to detail, coupled with the sophisticated reasoning presented, illustrates the paramount importance of comprehensive language mastery in academic contexts.`;
+    }
   }
 
-  // Word count calculation
-  const wordCount = band9Version.split(/\s+/).length;
+  console.log('Parsed results:', { 
+    score, 
+    explanation: explanation.substring(0, 100), 
+    lineByLineAnalysis: lineByLineAnalysis.substring(0, 100),
+    improvedText: improvedText.substring(0, 100),
+    band9Version: band9Version.substring(0, 100)
+  });
 
   return {
     score: score || '6.0',
-    explanation: explanation,
+    explanation: explanation || 'Analysis completed',
     lineByLineAnalysis: lineByLineAnalysis,
-    markedErrors: '', // Deprecated but kept for compatibility
+    markedErrors: '', // Removed as requested
     improvedText: improvedText,
-    band9Version: band9Version,
-    wordCount: wordCount
+    band9Version: band9Version
   };
 };
-
-// Helper functions for fallbacks
-const generateFallbackExplanation = (score: string): string => {
-  const band = Math.floor(parseFloat(score));
-  return `This writing demonstrates ${BAND_DESCRIPTORS[band as keyof typeof BAND_DESCRIPTORS]} level performance. Key areas for improvement include vocabulary sophistication, grammatical complexity, and cohesive device usage. Focus on developing more nuanced argumentation and academic register to progress to higher band scores.`;
-};
-
-const generateFallbackLineAnalysis = (): string => {
-  return `**Sentence 1:** [Original sentence analysis not available in this format]
-**Issues:** Generic vocabulary usage, basic sentence structures
-**Improvements:** Implement sophisticated vocabulary and complex grammatical patterns
-**Priority:** HIGH - Focus on academic register enhancement`;
-};
-
-const generateFallbackImprovedText = (): string => {
-  return `[+Furthermore,+] enhance your writing with **[sophisticated vocabulary]** and [+complex grammatical structures+]. **[+Consequently,+]** this will [+significantly+] improve your band score through [+advanced academic register+].`;
-};
-
-const extractOriginalText = (response: string): string => {
-  // Try to find original text in quotes or user input
-  const textMatch = response.match(/"([^"]{50,})"/);
-  return textMatch ? textMatch[1] : 'Contemporary society faces numerous challenges that require comprehensive analysis and thoughtful solutions.';
-};
-
-// Export utility functions for external use
-export { BAND_DESCRIPTORS, generateAdvancedBand9Fallback };
