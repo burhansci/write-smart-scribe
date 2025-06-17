@@ -1,4 +1,3 @@
-
 import { OpenAI } from "openai";
 
 // Kluster AI configuration with R1 model
@@ -30,29 +29,57 @@ Your response must follow this EXACT format with these section headers:
 Provide the estimated IELTS band score (format: "7.0" or "6.5")
 
 **Line-by-Line Analysis**
-Analyze each sentence individually with DETAILED, SPECIFIC feedback. For each sentence, identify:
-- EXACT words/phrases that need improvement (not just categories)
-- SPECIFIC error types with clear explanations
-- PRECISE suggestions with reasons why they're better
-- Academic writing improvements
+CRITICAL EVALUATION MANDATORY: You MUST examine EVERY sentence for ALL possible errors. NO SENTENCE can be marked as perfect without thorough checking.
 
-Format each line as:
+MANDATORY CHECKLIST for EACH sentence - You MUST check:
+✓ Subject-verb agreement ✓ Verb tenses and forms ✓ Article usage (a, an, the) ✓ Preposition accuracy ✓ Word order ✓ Singular/plural forms ✓ Spelling of every word ✓ Punctuation placement ✓ Capitalization ✓ Sentence structure ✓ Word choice appropriateness ✓ Cohesive device presence ✓ Academic register level ✓ Redundancy or wordiness
+
+Format for EVERY sentence:
 Line [number]: "[complete original sentence]"
-Specific Issues:
-• [Error Type]: "[exact problematic phrase]" → Issue: [detailed explanation of why it's wrong]
-• [Error Type]: "[exact problematic phrase]" → Issue: [detailed explanation of why it's wrong]
-Specific Suggestions:
-• Replace "[exact original phrase]" with "[suggested improvement]" → Reason: [why this is better for IELTS]
-• Change "[exact original phrase]" to "[suggested improvement]" → Reason: [academic writing improvement]
+CRITICAL ANALYSIS:
+[G] Grammar: EXAMINE - Subject-verb agreement: [finding] | Tenses: [finding] | Articles: [finding] | Prepositions: [finding] | Word order: [finding] | RESULT: [specific corrections or "No errors found after thorough check"]
+[S] Spelling: CHECK each word - "[any misspelled word]" → "[correction]" | RESULT: [corrections or "All words spelled correctly"]
+[V] Vocabulary: EVALUATE - Appropriateness: [finding] | Academic level: [finding] | Precision: [finding] | RESULT: [specific replacements or "Vocabulary appropriate after review"]
+[C] Cohesion: ASSESS - Sentence connection: [finding] | Transition needed: [finding] | Flow: [finding] | RESULT: [specific cohesive devices to add or "Cohesion adequate"]
+[P] Punctuation: VERIFY - Commas: [finding] | Periods: [finding] | Other marks: [finding] | RESULT: [corrections or "Punctuation correct"]
+✓ Corrected: "[improved sentence with ALL identified changes applied]"
 Priority: [High/Medium/Low based on band score impact]
 
-**Improved with Suggestions**
-Show 3-5 specific improvements using these markers:
-- [+word/phrase+] for additions that improve clarity/flow
-- [~word~] for words to remove/replace  
-- [+word+]{explanation} for vocabulary/grammar upgrades
+MANDATORY REQUIREMENTS:
+- You CANNOT say "No errors" without showing your checking process
+- You MUST examine each grammatical element individually
+- You MUST verify spelling of each word
+- You MUST evaluate vocabulary precision
+- You MUST assess cohesion needs
+- You MUST check all punctuation
+- If truly no errors exist, you MUST show "No errors found after thorough check"
+- EVERY sentence must show your critical evaluation process
 
-Example: "The economy [+has been significantly+] affected. [~Very~] [+Numerous+] people [+have become+] unemployed [+as a direct consequence+]."
+**Improved with Suggestions**
+MANDATORY: Show complete text with ALL changes marked using these EXACT formats:
+- [+word/phrase+] for additions (specify what's added)
+- [~remove~] for removals (show what's being removed)
+- [~old→new~] for replacements (show exact old and new)
+- [-punctuation-] for punctuation removals
+- [+punctuation+] for punctuation additions
+- [+cohesion: linking word/phrase+] for cohesive device additions
+
+EXAMPLE FORMAT:
+"[+cohesion: In contemporary society,+] the economy [~is very bad~→has deteriorated significantly~] [+in recent years+]. [+cohesion: Furthermore,+] [~this affect~→this has affected~] [+numerous+] [-many-] people [+adversely+]. [+cohesion: Consequently,+] unemployment rates [+have risen dramatically+]."
+
+You MUST show:
+- What words are being REMOVED: [~removed word~]
+- What words are being ADDED: [+added word+]
+- What words are being REPLACED: [~old→new~]
+- What punctuation is changed: [-old punctuation-] [+new punctuation+]
+- MANDATORY COHESION ADDITIONS: [+cohesion: specific linking device+]
+
+COHESION REQUIREMENTS:
+- You MUST identify where cohesive devices are missing
+- You MUST add specific linking words/phrases like: Moreover, Furthermore, However, Consequently, In addition, On the other hand, As a result, Nevertheless, etc.
+- You MUST show these as [+cohesion: specific device+] in the improved text
+- Add transitions between sentences, paragraphs, and ideas
+- Include discourse markers for better flow
 
 Keep suggestions practical and immediately applicable. Focus on improvements that raise the band score.
 
@@ -88,6 +115,15 @@ STYLE REQUIREMENTS:
 IMPORTANT: Write the complete Band 9 version as flowing, natural text without any markers or annotations. This should serve as the target standard the student should aspire to reach. The Band 9 version MUST be substantial and complete - never write "not available" or short responses.
 
 CRITICAL: The Band 9 Version section is MANDATORY. Every response MUST include a full, comprehensive Band 9 rewrite. This is not optional.
+
+CRITICAL REQUIREMENTS - YOU MUST:
+1. Specify EXACT words for every correction
+2. Show EXACT punctuation changes
+3. Identify SPECIFIC cohesive devices to add
+4. Mark ALL additions, removals, and replacements in Improved section
+5. Never use general terms - always specify exact changes
+6. Show critical evaluation process for every sentence
+7. Provide complete Band 9 rewrite
 
 IMPORTANT: Be specific, concise, and actionable. Each suggestion should clearly explain why it's better.`;
 
