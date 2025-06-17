@@ -3,11 +3,10 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, RefreshCw, BarChart3, Lightbulb, FileText, Eye, EyeOff, List } from "lucide-react";
+import { Download, RefreshCw, BarChart3, Lightbulb, Eye, EyeOff, List } from "lucide-react";
 import { WritingSubmission } from "@/pages/Index";
 import ScoreOverview from "@/components/feedback/ScoreOverview";
 import ImprovementSuggestions from "@/components/feedback/ImprovementSuggestions";
-import DetailedAnalysis from "@/components/feedback/DetailedAnalysis";
 import SideBySideComparison from "@/components/feedback/SideBySideComparison";
 import QuickInsights from "@/components/feedback/QuickInsights";
 import LineByLineAnalysis from "@/components/feedback/LineByLineAnalysis";
@@ -34,14 +33,14 @@ ${submission.question || 'No specific question provided'}
 ORIGINAL TEXT:
 ${submission.text}
 
-ANALYSIS:
-${submission.feedback?.explanation}
-
 LINE-BY-LINE ANALYSIS:
 ${submission.feedback?.lineByLineAnalysis}
 
 IMPROVEMENTS:
 ${submission.feedback?.improvedText}
+
+BAND 9 VERSION:
+${submission.feedback?.band9Version}
     `;
     
     const blob = new Blob([content], { type: 'text/plain' });
@@ -114,9 +113,9 @@ ${submission.feedback?.improvedText}
         />
       )}
 
-      {/* Main Content Tabs */}
+      {/* Main Content Tabs - Only 3 tabs now */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -128,10 +127,6 @@ ${submission.feedback?.improvedText}
           <TabsTrigger value="improvements" className="flex items-center gap-2">
             <Lightbulb className="w-4 h-4" />
             <span className="hidden sm:inline">Improvements</span>
-          </TabsTrigger>
-          <TabsTrigger value="analysis" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">Analysis</span>
           </TabsTrigger>
         </TabsList>
 
@@ -165,10 +160,6 @@ ${submission.feedback?.improvedText}
             improvedText={submission.feedback.improvedText}
             band9Version={submission.feedback.band9Version}
           />
-        </TabsContent>
-
-        <TabsContent value="analysis" className="space-y-4">
-          <DetailedAnalysis explanation={submission.feedback.explanation} />
         </TabsContent>
       </Tabs>
     </div>

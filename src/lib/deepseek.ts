@@ -1,3 +1,4 @@
+
 import { OpenAI } from "openai";
 
 // Kluster AI configuration with R1 model
@@ -20,22 +21,13 @@ export interface DeepSeekResponse {
   }>;
 }
 
-export const createDeepSeekPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
+export const createOptimizedIELTSPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
   const systemPrompt = `You are an expert IELTS Writing examiner with 15+ years of experience. Provide focused, actionable feedback that helps students improve their band score.
 
 Your response must follow this EXACT format with these section headers:
 
 **Score**
 Provide the estimated IELTS band score (format: "7.0" or "6.5")
-
-**Explanation** 
-Write a concise analysis (100-120 words) covering:
-- Task Response: Direct answer to question, clear position, relevant examples
-- Coherence & Cohesion: Paragraph structure, logical flow, linking words
-- Lexical Resource: Vocabulary variety, accuracy, collocations
-- Grammatical Range & Accuracy: Sentence variety, error frequency, complexity
-
-Focus on 2-3 key strengths and 2-3 priority areas for improvement.
 
 **Line-by-Line Analysis**
 Analyze each sentence individually with DETAILED, SPECIFIC feedback. For each sentence, identify:
@@ -97,7 +89,7 @@ IMPORTANT: Write the complete Band 9 version as flowing, natural text without an
 
 CRITICAL: The Band 9 Version section is MANDATORY. Every response MUST include a full, comprehensive Band 9 rewrite. This is not optional.
 
-IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each suggestion should clearly explain why it's better.`;
+IMPORTANT: Be specific, concise, and actionable. Each suggestion should clearly explain why it's better.`;
 
   return [
     { role: 'system', content: systemPrompt },
@@ -105,7 +97,7 @@ IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each sugg
   ];
 };
 
-export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
+export const callOptimizedIELTSAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
   const response = await client.chat.completions.create({
     model: "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
     messages: messages,
@@ -173,7 +165,7 @@ const generateFallbackBand9Version = (originalText: string): string => {
   return enhancedSentences.join('. ') + '.';
 };
 
-export const parseDeepSeekResponse = (response: string) => {
+export const parseOptimizedIELTSResponse = (response: string) => {
   console.log('Full response to parse:', response);
   
   // Split by double asterisks and clean up
@@ -196,8 +188,6 @@ export const parseDeepSeekResponse = (response: string) => {
       // Extract band score - look for decimal numbers
       const scoreMatch = sectionContent.match(/(\d+\.?\d*)/);
       score = scoreMatch ? scoreMatch[1] : sectionContent.trim().split('\n')[0];
-    } else if (sectionHeader.includes('explanation')) {
-      explanation = sectionContent.trim();
     } else if (sectionHeader.includes('line-by-line') || sectionHeader.includes('line by line')) {
       lineByLineAnalysis = sectionContent.trim();
     } else if (sectionHeader.includes('improved') || sectionHeader.includes('suggestions')) {
@@ -212,9 +202,8 @@ export const parseDeepSeekResponse = (response: string) => {
     score = '6.0';
   }
   
-  if (!explanation) {
-    explanation = 'Your writing shows good understanding with areas for improvement in vocabulary, grammar, and organization.';
-  }
+  // Generate minimal explanation since we removed the detailed one
+  explanation = `Your writing demonstrates Band ${score} level with good understanding. Focus on the line-by-line analysis and improvements for detailed feedback.`;
 
   if (!lineByLineAnalysis) {
     lineByLineAnalysis = 'Line-by-line analysis not available in this response.';
