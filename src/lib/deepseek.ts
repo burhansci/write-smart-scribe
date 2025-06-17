@@ -20,7 +20,7 @@ export interface DeepSeekResponse {
   }>;
 }
 
-export const createOptimizedIELTSPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
+export const createDeepSeekPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
   const systemPrompt = `You are an expert IELTS Writing examiner with 15+ years of experience. Provide focused, actionable feedback that helps students improve their band score.
 
 Your response must follow this EXACT format with these section headers:
@@ -28,16 +28,23 @@ Your response must follow this EXACT format with these section headers:
 **Score**
 Provide the estimated IELTS band score (format: "7.0" or "6.5")
 
-**Line-by-Line Analysis**
-CRITICAL REQUIREMENT: Analyze each sentence individually with DETAILED, SPECIFIC feedback. 
+**Explanation** 
+Write a concise analysis (100-120 words) covering:
+- Task Response: Direct answer to question, clear position, relevant examples
+- Coherence & Cohesion: Paragraph structure, logical flow, linking words
+- Lexical Resource: Vocabulary variety, accuracy, collocations
+- Grammatical Range & Accuracy: Sentence variety, error frequency, complexity
 
-For EACH sentence, you MUST identify:
+Focus on 2-3 key strengths and 2-3 priority areas for improvement.
+
+**Line-by-Line Analysis**
+Analyze each sentence individually with DETAILED, SPECIFIC feedback. For each sentence, identify:
 - EXACT words/phrases that need improvement (not just categories)
-- SPECIFIC error types with clear explanations  
+- SPECIFIC error types with clear explanations
 - PRECISE suggestions with reasons why they're better
 - Academic writing improvements
 
-MANDATORY FORMAT for EVERY sentence:
+Format each line as:
 Line [number]: "[complete original sentence]"
 Specific Issues:
 • [Error Type]: "[exact problematic phrase]" → Issue: [detailed explanation of why it's wrong]
@@ -47,77 +54,50 @@ Specific Suggestions:
 • Change "[exact original phrase]" to "[suggested improvement]" → Reason: [academic writing improvement]
 Priority: [High/Medium/Low based on band score impact]
 
-EXAMPLE:
-Line 1: "Technology is very important in today's world."
-Specific Issues:
-• Vocabulary: "very important" → Issue: Too basic/informal for academic writing, lacks precision
-• Article Usage: Missing article before "today's world" → Issue: Should be "the world" for definiteness
-• Sentence Structure: Simple sentence structure → Issue: Lacks complexity expected at higher bands
-Specific Suggestions:
-• Replace "very important" with "of paramount significance" → Reason: More sophisticated vocabulary shows advanced language skills
-• Change "in today's world" to "in contemporary society" → Reason: More academic register appropriate for IELTS
-• Add subordinate clause for complexity → Reason: Complex sentences demonstrate higher grammatical range
-Priority: High
-
-CRITICAL REQUIREMENTS:
-- You MUST analyze EVERY sentence individually
-- You MUST provide SPECIFIC problematic phrases, not general categories
-- You MUST explain WHY each issue is problematic for IELTS
-- You MUST give EXACT replacement suggestions with reasons
-- NO sentence can be skipped without analysis
-- If a sentence has no errors, you MUST still show the analysis process
-
 **Improved with Suggestions**
-MANDATORY: Show the complete text with ALL changes marked using these EXACT formats:
+Show 3-5 specific improvements using these markers:
+- [+word/phrase+] for additions that improve clarity/flow
+- [~word~] for words to remove/replace  
+- [+word+]{explanation} for vocabulary/grammar upgrades
 
-MARKING SYSTEM - USE EXACTLY:
-- [~remove this text~] for text being removed
-- [+add this text+] for text being added  
-- [~old text→new text~] for direct replacements
-- [+cohesion: specific linking word+] for cohesive devices
-- [-remove punctuation-] for punctuation removal
-- [+add punctuation+] for punctuation addition
+Example: "The economy [+has been significantly+] affected. [~Very~] [+Numerous+] people [+have become+] unemployed [+as a direct consequence+]."
 
-COHESION RULES:
-- ONLY add cohesive devices where there are actual logical gaps
-- DO NOT add to every sentence - only where transitions are missing
-- Add [+cohesion: device+] for:
-  * Paragraph transitions
-  * Contrasting ideas (however, nevertheless)
-  * Adding information (furthermore, moreover)  
-  * Cause/effect relationships (consequently, therefore)
-  * Conclusions (in conclusion, ultimately)
-- Avoid over-linking - natural flow is better than excessive connectors
-
-CORRECT EXAMPLE:
-"Technology [~is very important~→is of paramount significance~] in [~today's world~→contemporary society~]. [+cohesion: Furthermore,+] it [+has+] [~affect~→affected~] [~many~→numerous~] aspects of [+our daily+] lives. [+cohesion: Consequently,+] understanding its impact [+has become+] crucial for [~people~→individuals~] [+in the modern era+]."
-
-WRONG EXAMPLES TO AVOID:
-- "Technology {is very important} in today's world" (wrong brackets)
-- "Technology [important] in today's world" (not showing what's removed)
-- "Technology [better word] in today's world" (not showing exact replacement)
+Keep suggestions practical and immediately applicable. Focus on improvements that raise the band score.
 
 **Band 9 Version**
-MANDATORY REQUIREMENT: Provide a complete Band 9 rewrite of the entire original text.
+YOU MUST PROVIDE A COMPLETE BAND 9 REWRITE - THIS IS MANDATORY AND REQUIRED.
 
-This section is CRITICAL and MUST demonstrate:
+This section is CRITICAL and MUST be included in every response. Provide a complete Band 9 rewrite of the entire original text that demonstrates:
 
-VOCABULARY: Sophisticated, precise vocabulary with advanced collocations
-GRAMMAR: Complex structures with perfect accuracy and varied sentence types
-COHESION: Advanced linking devices with seamless logical flow
-STYLE: Formal academic register with nuanced argumentation
+VOCABULARY REQUIREMENTS:
+- Sophisticated vocabulary with precise collocations
+- Advanced academic terminology where appropriate
+- Varied synonyms avoiding repetition
+- Natural, native-like word choices
 
-Write as flowing, natural text without markers. This must be substantial and complete - NEVER write "not available" or short responses.
+GRAMMAR REQUIREMENTS:
+- Complex grammatical structures with varied sentence types
+- Perfect grammar with zero errors
+- Advanced sentence patterns (conditional, subjunctive, etc.)
+- Sophisticated punctuation usage
 
-EXAMPLE Band 9 Version:
-"In contemporary society, technological advancement has assumed paramount significance in virtually every facet of human existence. The proliferation of digital innovations has fundamentally transformed the manner in which individuals communicate, conduct business, and access information. Consequently, the implications of this technological revolution extend far beyond mere convenience, encompassing profound societal, economic, and cultural ramifications that merit careful consideration."
+COHESION REQUIREMENTS:
+- Advanced cohesive devices and linking expressions
+- Seamless paragraph transitions
+- Logical flow with clear argument progression
+- Sophisticated discourse markers
 
-CRITICAL REQUIREMENTS:
-1. Every sentence must be analyzed individually with specific issues and suggestions
-2. Exact phrases must be identified for all improvements
-3. All changes must be marked with correct formatting in Improved section
-4. Band 9 version must be complete and substantial
-5. Never use vague terms - always specify exact changes`;
+STYLE REQUIREMENTS:
+- Precise academic language and formal register
+- Natural flow with sophisticated reasoning
+- Nuanced argumentation with depth
+- Appropriate word count matching the task
+
+IMPORTANT: Write the complete Band 9 version as flowing, natural text without any markers or annotations. This should serve as the target standard the student should aspire to reach. The Band 9 version MUST be substantial and complete - never write "not available" or short responses.
+
+CRITICAL: The Band 9 Version section is MANDATORY. Every response MUST include a full, comprehensive Band 9 rewrite. This is not optional.
+
+IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each suggestion should clearly explain why it's better.`;
 
   return [
     { role: 'system', content: systemPrompt },
@@ -125,9 +105,9 @@ CRITICAL REQUIREMENTS:
   ];
 };
 
-export const callOptimizedIELTSAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
+export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
   const response = await client.chat.completions.create({
-    model: "deepseek-ai/DeepSeek-V3-0324",
+    model: "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
     messages: messages,
     temperature: 0.3,
     max_tokens: 4000,
@@ -193,7 +173,7 @@ const generateFallbackBand9Version = (originalText: string): string => {
   return enhancedSentences.join('. ') + '.';
 };
 
-export const parseOptimizedIELTSResponse = (response: string) => {
+export const parseDeepSeekResponse = (response: string) => {
   console.log('Full response to parse:', response);
   
   // Split by double asterisks and clean up
@@ -216,6 +196,8 @@ export const parseOptimizedIELTSResponse = (response: string) => {
       // Extract band score - look for decimal numbers
       const scoreMatch = sectionContent.match(/(\d+\.?\d*)/);
       score = scoreMatch ? scoreMatch[1] : sectionContent.trim().split('\n')[0];
+    } else if (sectionHeader.includes('explanation')) {
+      explanation = sectionContent.trim();
     } else if (sectionHeader.includes('line-by-line') || sectionHeader.includes('line by line')) {
       lineByLineAnalysis = sectionContent.trim();
     } else if (sectionHeader.includes('improved') || sectionHeader.includes('suggestions')) {
@@ -230,26 +212,17 @@ export const parseOptimizedIELTSResponse = (response: string) => {
     score = '6.0';
   }
   
-  // Generate minimal explanation since we removed the detailed one
-  explanation = `Your writing demonstrates Band ${score} level with good understanding. Focus on the line-by-line analysis and improvements for detailed feedback.`;
+  if (!explanation) {
+    explanation = 'Your writing shows good understanding with areas for improvement in vocabulary, grammar, and organization.';
+  }
 
-  // Improved fallback for line-by-line analysis
-  if (!lineByLineAnalysis || lineByLineAnalysis.length < 100) {
-    lineByLineAnalysis = `Line 1: "[First sentence of your text]"
-Specific Issues:
-• Vocabulary: "[specific phrase]" → Issue: [explanation of problem]
-• Grammar: "[specific phrase]" → Issue: [explanation of problem]
-Specific Suggestions:
-• Replace "[exact phrase]" with "[improvement]" → Reason: [why better for IELTS]
-Priority: High
-
-[Additional lines would follow the same format]`;
+  if (!lineByLineAnalysis) {
+    lineByLineAnalysis = 'Line-by-line analysis not available in this response.';
   }
   
-  // Enhanced fallback for improved text with correct formatting
   if (!improvedText || improvedText.length < 50) {
-    console.log('Generating fallback improvements with correct format...');
-    improvedText = `[+cohesion: In contemporary society,+] technology [~is very important~→is of paramount significance~] in [~today's world~→our daily lives~]. [+cohesion: Furthermore,+] it [+has+] [~affect~→affected~] [~many~→numerous~] aspects of modern life. [+cohesion: Consequently,+] understanding its impact [+has become+] crucial for [~people~→individuals~] [+in the digital age+].`;
+    console.log('Generating fallback improvements...');
+    improvedText = `[+Additionally,+]{Add linking words} [+sophisticated+]{Use varied vocabulary} [+In conclusion,+]{Strong concluding phrases}`;
   }
 
   // ROBUST BAND 9 FALLBACK - NEVER return "not available"
@@ -261,9 +234,9 @@ Priority: High
     
     band9Version = generateFallbackBand9Version(originalText);
     
-    // Ensure it's substantial - create a comprehensive Band 9 example
+    // Ensure it's substantial
     if (band9Version.length < 200) {
-      band9Version = `In contemporary society, the proliferation of technological innovations has fundamentally transformed virtually every facet of human existence. This unprecedented digital revolution has not merely enhanced operational efficiency but has also catalyzed profound societal metamorphoses that permeate educational, professional, and interpersonal domains. Furthermore, the exponential advancement of artificial intelligence and machine learning algorithms has precipitated both unprecedented opportunities and formidable challenges that necessitate careful consideration. Consequently, the imperative to cultivate digital literacy and adaptive competencies has become paramount for individuals seeking to navigate the complexities of the modern technological landscape. Ultimately, the judicious integration of technology into societal frameworks requires a nuanced understanding of its multifaceted implications and the development of comprehensive strategies to harness its potential while mitigating associated risks.`;
+      band9Version = `In contemporary society, the significance of effective communication cannot be overstated. This exemplary piece of writing demonstrates sophisticated argumentation through the utilization of advanced vocabulary, complex grammatical structures, and seamless cohesive devices. Furthermore, the academic register employed throughout reflects the nuanced understanding required for Band 9 proficiency. Consequently, this enhanced version serves as a benchmark for aspiring candidates seeking to achieve excellence in IELTS Writing Task assessments. The meticulous attention to detail, coupled with the sophisticated reasoning presented, illustrates the paramount importance of comprehensive language mastery in academic contexts.`;
     }
   }
 
