@@ -107,7 +107,7 @@ IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each sugg
 
 export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
   const response = await client.chat.completions.create({
-    model: "klusterai/Meta-Llama-3.3-70B-Instruct-Turbo",
+    model: "deepseek-ai/DeepSeek-V3-0324",
     messages: messages,
     temperature: 0.3,
     max_tokens: 4000,
