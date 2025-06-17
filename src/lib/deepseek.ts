@@ -1,6 +1,11 @@
-
 // OpenRouter API configuration and client
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+// Kluster AI configuration
+const client = new OpenAI({
+  apiKey: "b5a3b313-78b2-4b41-9704-d3b012ffb24d",
+  baseURL: "https://api.kluster.ai/v1"
+});
 
 export interface DeepSeekMessage {
   role: 'system' | 'user' | 'assistant';
@@ -126,30 +131,15 @@ IMPORTANT: Be specific, concise, and actionable. Avoid generic advice. Each sugg
   ];
 };
 
-export const callDeepSeekAPI = async (messages: DeepSeekMessage[], apiKey: string): Promise<string> => {
-  const response = await fetch(OPENROUTER_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': window.location.origin,
-      'X-Title': 'AI Writing Coach',
-    },
-    body: JSON.stringify({
-      model: 'deepseek/deepseek-chat',
-      messages,
-      temperature: 0.3,
-      max_tokens: 4000, // Increased to ensure complete responses
-    }),
+export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
+  const response = await client.chat.completions.create({
+    model: "deepseek-ai/DeepSeek-V3-0324",
+    messages: messages,
+    temperature: 0.3,
+    max_tokens: 4000,
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
-  }
-
-  const data: DeepSeekResponse = await response.json();
-  return data.choices[0]?.message?.content || 'No response received';
+  return response.choices[0]?.message?.content || 'No response received';
 };
 
 const generateFallbackBand9Version = (originalText: string): string => {

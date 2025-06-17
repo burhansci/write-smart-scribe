@@ -19,9 +19,6 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
   const [writingMode, setWritingMode] = useState<'question' | 'free'>('question');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // Use environment variable for API key
-  const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-
   // Listen for selected prompts from localStorage
   useEffect(() => {
     const checkForSelectedPrompt = () => {
@@ -63,22 +60,13 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
       return;
     }
 
-    if (!API_KEY) {
-      toast({
-        title: "Configuration Error",
-        description: "OpenRouter API key is not configured. Please add VITE_OPENROUTER_API_KEY to your environment variables.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsAnalyzing(true);
 
     try {
-      console.log('Starting OpenRouter analysis...');
+      console.log('Starting Kluster AI analysis...');
       const messages = createDeepSeekPrompt(text, 'IELTS');
-      const response = await callDeepSeekAPI(messages, API_KEY);
-      console.log('OpenRouter response:', response);
+      const response = await callDeepSeekAPI(messages);
+      console.log('Kluster AI response:', response);
       
       const parsedFeedback = parseDeepSeekResponse(response);
       console.log('Parsed feedback:', parsedFeedback);
@@ -125,7 +113,7 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
       });
 
     } catch (error) {
-      console.error('OpenRouter analysis error:', error);
+      console.error('Kluster AI analysis error:', error);
       toast({
         title: "Analysis Error",
         description: error instanceof Error ? error.message : "Failed to analyze your writing. Please try again.",
