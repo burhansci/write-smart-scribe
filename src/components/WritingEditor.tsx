@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,9 +18,6 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
   const [question, setQuestion] = useState<string>('');
   const [writingMode, setWritingMode] = useState<'question' | 'free'>('question');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  // Use the hardcoded API key
-  const HARDCODED_API_KEY = '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';
 
   // Listen for selected prompts from localStorage
   useEffect(() => {
@@ -67,10 +63,10 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
     setIsAnalyzing(true);
 
     try {
-      console.log('Starting OpenRouter analysis...');
+      console.log('Starting Kluster AI analysis...');
       const messages = createDeepSeekPrompt(text, 'IELTS');
-      const response = await callDeepSeekAPI(messages, HARDCODED_API_KEY);
-      console.log('OpenRouter response:', response);
+      const response = await callDeepSeekAPI(messages);
+      console.log('Kluster AI response:', response);
       
       const parsedFeedback = parseDeepSeekResponse(response);
       console.log('Parsed feedback:', parsedFeedback);
@@ -117,7 +113,7 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
       });
 
     } catch (error) {
-      console.error('OpenRouter analysis error:', error);
+      console.error('Kluster AI analysis error:', error);
       toast({
         title: "Analysis Error",
         description: error instanceof Error ? error.message : "Failed to analyze your writing. Please try again.",
