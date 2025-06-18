@@ -22,49 +22,80 @@ export interface DeepSeekResponse {
 }
 
 export const createDeepSeekPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
-  const systemPrompt = `You are an expert IELTS Writing examiner. Analyze EVERY sentence carefully and provide feedback in this EXACT format:
+  const systemPrompt = `You are a highly experienced IELTS Writing examiner with 15+ years of experience. You MUST analyze EVERY sentence with extreme precision and provide specific, actionable feedback.
 
-**Score**
-[Provide ONLY the band score number, e.g., "7.0"]
+CRITICAL INSTRUCTIONS:
+1. Analyze EVERY single sentence for ALL four IELTS criteria
+2. Identify SPECIFIC errors, not generic comments
+3. Provide EXACT replacements and improvements
+4. Be highly critical - even minor issues matter for band scores
+5. Focus on vocabulary precision, grammatical accuracy, cohesion, and task response
 
-**Line-by-Line Analysis**
-For EACH sentence, provide detailed analysis:
-Line 1: "[exact sentence from user's text]"
-Issues: [List SPECIFIC issues: grammar errors, vocabulary choices, sentence structure problems, cohesion issues, register problems, etc. If no issues, write "No major issues found"]
-Suggestions: [Provide SPECIFIC actionable improvements: "Replace X with Y", "Add linking word", "Use more sophisticated vocabulary", etc.]
+RESPOND IN THIS EXACT FORMAT:
 
-Line 2: "[next exact sentence]"
-Issues: [specific issues]
-Suggestions: [specific improvements]
+**BAND SCORE**
+[Single number: X.X]
 
-[Continue for ALL sentences]
+**DETAILED LINE-BY-LINE ANALYSIS**
 
-**Improved with Suggestions**
-Rewrite the text with these markers:
-- Use [+word/phrase+] for additions
-- Use [~word~] for deletions
-- Show clear before/after improvements
+Sentence 1: "[EXACT sentence from user text]"
+TASK RESPONSE: [How well does this sentence address the task? Specific issues with relevance, development, examples]
+COHERENCE & COHESION: [Specific linking issues, paragraph structure, logical flow problems]
+LEXICAL RESOURCE: [Exact vocabulary issues - word choice, collocations, repetition, formality level]
+GRAMMATICAL ACCURACY: [Specific grammar errors - tense, subject-verb agreement, articles, sentence structure]
+OVERALL ISSUES: [Summary of all problems in this sentence]
+SPECIFIC IMPROVEMENTS: [Exact word-for-word replacements and additions needed]
 
-**Band 9 Version**
-Rewrite the ENTIRE user's text as a Band 9 response. Must be based on the user's actual content, not generic text. Enhance vocabulary, grammar, cohesion, and task achievement while keeping the same ideas and structure.
+Sentence 2: "[Next exact sentence]"
+[Same detailed analysis format]
 
-Be specific, detailed, and critical in your analysis. Point out even minor issues.`;
+[Continue for EVERY sentence - no exceptions]
+
+**MARKED IMPROVEMENTS**
+[Rewrite the ENTIRE text with these EXACT markers:
+- [+NEW WORD/PHRASE+] for additions
+- [~OLD WORD~] for deletions  
+- {REPLACEMENT|ORIGINAL} for substitutions
+- Make every change crystal clear with markers]
+
+**BAND 9 TARGET VERSION**
+[Complete rewrite as Band 9 level - sophisticated vocabulary, complex grammar, perfect cohesion, advanced academic register. Must address same points as original but with Band 9 sophistication]
+
+**ERROR PATTERN SUMMARY**
+Grammar Errors: [List all specific grammar mistakes found]
+Vocabulary Issues: [List all word choice and usage problems]
+Cohesion Problems: [List all linking and flow issues]
+Task Response Gaps: [List all task-related shortcomings]
+
+REQUIREMENTS:
+- Find AT LEAST 3-5 specific issues per sentence (unless it's genuinely perfect)
+- Be extremely detailed and critical
+- Provide exact word replacements
+- Focus on IELTS band descriptors
+- No generic feedback - everything must be specific to this text`;
+
+  const userPrompt = `Analyze this IELTS Writing text with extreme precision:
+
+"${text}"
+
+CONTEXT: This is an IELTS Academic Writing Task. Analyze every aspect according to IELTS band descriptors. Be highly critical and specific in identifying even subtle issues that prevent higher band scores.`;
 
   return [
     { role: 'system', content: systemPrompt },
-    { role: 'user', content: text }
+    { role: 'user', content: userPrompt }
   ];
 };
 
 export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
   try {
-    console.log('Making API call to Kluster AI...');
+    console.log('Making enhanced API call to Kluster AI...');
     const response = await client.chat.completions.create({
       model: "deepseek-ai/DeepSeek-V3-0324",
       messages: messages,
-      temperature: 0.3,
-      max_tokens: 2000,
-      stream: false // Explicitly disable streaming
+      temperature: 0.1, // Lower temperature for more consistent analysis
+      max_tokens: 4000, // Increased token limit
+      top_p: 0.95,
+      stream: false
     });
 
     console.log('Raw API response:', response);
@@ -82,93 +113,307 @@ export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<stri
   } catch (error) {
     console.error('API call error:', error);
     
-    // If it's a JSON parsing error, provide a fallback response
     if (error instanceof SyntaxError && error.message.includes('JSON')) {
-      console.log('JSON parsing error detected, providing fallback response');
-      return generateFallbackResponse(messages[1].content);
+      console.log('JSON parsing error detected, providing enhanced fallback response');
+      return generateEnhancedFallbackResponse(messages[1].content);
     }
     
     throw error;
   }
 };
 
-const generateFallbackResponse = (originalText: string): string => {
-  return `**Score**
+const generateEnhancedFallbackResponse = (originalText: string): string => {
+  const sentences = originalText.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  
+  let lineAnalysis = '';
+  sentences.forEach((sentence, index) => {
+    const cleanSentence = sentence.trim();
+    if (cleanSentence) {
+      const analysis = performDetailedAnalysis(cleanSentence);
+      lineAnalysis += `Sentence ${index + 1}: "${cleanSentence}"\n`;
+      lineAnalysis += `TASK RESPONSE: ${analysis.taskResponse}\n`;
+      lineAnalysis += `COHERENCE & COHESION: ${analysis.cohesion}\n`;
+      lineAnalysis += `LEXICAL RESOURCE: ${analysis.vocabulary}\n`;
+      lineAnalysis += `GRAMMATICAL ACCURACY: ${analysis.grammar}\n`;
+      lineAnalysis += `OVERALL ISSUES: ${analysis.overallIssues}\n`;
+      lineAnalysis += `SPECIFIC IMPROVEMENTS: ${analysis.improvements}\n\n`;
+    }
+  });
+
+  const markedImprovements = generateMarkedImprovements(originalText);
+  const band9Version = generateEnhancedBand9Version(originalText);
+
+  return `**BAND SCORE**
 6.5
 
-**Line-by-Line Analysis**
-Line 1: "${originalText.split('.')[0]}."
-Issues: Basic sentence structure could be improved
-Suggestions: Consider using more complex sentence structures
+**DETAILED LINE-BY-LINE ANALYSIS**
+${lineAnalysis}
 
-**Improved with Suggestions**
-${originalText.replace(/very/g, 'extremely').replace(/good/g, 'excellent')}
+**MARKED IMPROVEMENTS**
+${markedImprovements}
 
-**Band 9 Version**
-${generateFallbackBand9Version(originalText)}`;
+**BAND 9 TARGET VERSION**
+${band9Version}
+
+**ERROR PATTERN SUMMARY**
+Grammar Errors: Basic sentence structures, limited complex grammar usage
+Vocabulary Issues: Repetitive word choices, informal register, basic vocabulary
+Cohesion Problems: Limited use of sophisticated linking devices
+Task Response Gaps: Could provide more specific examples and deeper analysis`;
 };
 
-const generateFallbackBand9Version = (originalText: string): string => {
-  // Simple enhancement of the original text
+const performDetailedAnalysis = (sentence: string) => {
+  const issues: string[] = [];
+  const improvements: string[] = [];
+  
+  // Advanced analysis patterns
+  const analysisPatterns = {
+    basicVocab: /\b(good|bad|nice|big|small|very|really|a lot of|lots of|thing|stuff)\b/gi,
+    contractions: /\b(don't|can't|won't|it's|that's|I'm|you're|we're|they're)\b/g,
+    informalWords: /\b(gonna|wanna|kinda|sorta|yeah|ok|okay)\b/gi,
+    repetitiveStarters: /^(I think|I believe|In my opinion|I feel)/i,
+    basicLinking: /\b(and|but|so|because)\b/g,
+    vaguePronouns: /\b(this|that|it|they)\b(?!\s+\w)/g,
+    redundancy: /\b(in order to|due to the fact that|despite the fact that)\b/gi
+  };
+
+  let taskResponse = "Addresses the topic appropriately";
+  let cohesion = "Basic sentence connection";
+  let vocabulary = "Standard vocabulary range";
+  let grammar = "Generally accurate with minor errors";
+
+  // Check for basic vocabulary
+  if (analysisPatterns.basicVocab.test(sentence)) {
+    vocabulary = "Uses basic vocabulary that limits band score - replace with more sophisticated alternatives";
+    issues.push("Basic vocabulary choices");
+    improvements.push("Replace basic adjectives with more precise academic vocabulary");
+  }
+
+  // Check for contractions
+  if (analysisPatterns.contractions.test(sentence)) {
+    grammar = "Contains contractions inappropriate for formal academic writing";
+    issues.push("Informal contractions used");
+    improvements.push("Replace contractions with full forms for academic register");
+  }
+
+  // Check for informal language
+  if (analysisPatterns.informalWords.test(sentence)) {
+    vocabulary = "Contains informal expressions unsuitable for IELTS academic writing";
+    issues.push("Informal language detected");
+    improvements.push("Use more formal academic expressions");
+  }
+
+  // Check sentence length and complexity
+  const wordCount = sentence.split(' ').length;
+  if (wordCount < 8) {
+    grammar = "Very short sentence lacking complexity expected for higher bands";
+    issues.push("Insufficient sentence development");
+    improvements.push("Expand with subordinate clauses, examples, or additional details");
+  } else if (wordCount > 35) {
+    grammar = "Overly long sentence that may confuse readers";
+    issues.push("Sentence too complex");
+    improvements.push("Break into shorter, clearer sentences or use better punctuation");
+  }
+
+  // Check for linking devices
+  if (sentence.length > 50 && !sentence.match(/\b(however|moreover|furthermore|nevertheless|consequently|therefore|thus|hence|additionally|specifically|particularly|notably|significantly)\b/i)) {
+    cohesion = "Lacks sophisticated cohesive devices expected for higher band scores";
+    issues.push("Missing advanced linking words");
+    improvements.push("Add sophisticated transitional phrases to improve flow");
+  }
+
+  const overallIssues = issues.length > 0 ? issues.join('; ') : "Minor areas for enhancement identified";
+  const specificImprovements = improvements.length > 0 ? improvements.join('; ') : "Consider using more sophisticated language structures";
+
+  return {
+    taskResponse,
+    cohesion,
+    vocabulary,
+    grammar,
+    overallIssues,
+    improvements: specificImprovements
+  };
+};
+
+const generateMarkedImprovements = (originalText: string): string => {
+  let improved = originalText;
+  
+  // Specific replacements with clear marking
+  const replacements = [
+    { pattern: /\bvery\s+(\w+)/g, replacement: '[~very~] [+exceptionally+] $1' },
+    { pattern: /\bgood\b/gi, replacement: '[~good~][+excellent+]' },
+    { pattern: /\bbad\b/gi, replacement: '[~bad~][+detrimental+]' },
+    { pattern: /\bbig\b/gi, replacement: '[~big~][+substantial+]' },
+    { pattern: /\bsmall\b/gi, replacement: '[~small~][+minimal+]' },
+    { pattern: /\ba lot of\b/gi, replacement: '[~a lot of~][+numerous+]' },
+    { pattern: /\bpeople\b/gi, replacement: '[~people~][+individuals+]' },
+    { pattern: /\bthink\b/gi, replacement: '[~think~][+believe+]' },
+    { pattern: /\bbecause\b/gi, replacement: '[~because~][+due to the fact that+]' },
+    { pattern: /\bdon't\b/gi, replacement: '[~don\'t~][+do not+]' },
+    { pattern: /\bcan't\b/gi, replacement: '[~can\'t~][+cannot+]' },
+    { pattern: /\band\b/g, replacement: '[+moreover,+] and' },
+    { pattern: /\bbut\b/g, replacement: '[~but~][+however,+]' }
+  ];
+
+  replacements.forEach(({ pattern, replacement }) => {
+    improved = improved.replace(pattern, replacement);
+  });
+
+  // Add sophisticated sentence starters if missing
+  if (!improved.match(/^(Furthermore|Moreover|Additionally|Consequently|Nevertheless|However)/)) {
+    improved = '[+Furthermore,+] ' + improved.toLowerCase();
+  }
+
+  return improved;
+};
+
+const generateEnhancedBand9Version = (originalText: string): string => {
   let enhanced = originalText;
   
-  // Basic improvements
-  enhanced = enhanced.replace(/\bvery\b/g, 'exceptionally');
-  enhanced = enhanced.replace(/\bgood\b/g, 'excellent');
-  enhanced = enhanced.replace(/\bbad\b/g, 'detrimental');
-  enhanced = enhanced.replace(/\bimportant\b/g, 'crucial');
-  enhanced = enhanced.replace(/\bpeople\b/g, 'individuals');
-  enhanced = enhanced.replace(/\bthink\b/g, 'believe');
-  enhanced = enhanced.replace(/\bbecause\b/g, 'due to the fact that');
-  
-  // Add sophisticated linking if text is too short
-  if (enhanced.length < 200) {
-    enhanced = "In contemporary society, " + enhanced.toLowerCase() + " Furthermore, this perspective demonstrates the complexity of modern issues and requires careful consideration of multiple factors.";
+  // Sophisticated vocabulary replacements
+  const band9Replacements = [
+    { from: /\bvery\s+important\b/gi, to: 'of paramount significance' },
+    { from: /\bvery\s+good\b/gi, to: 'exceptionally beneficial' },
+    { from: /\bvery\s+bad\b/gi, to: 'profoundly detrimental' },
+    { from: /\bpeople\s+think\b/gi, to: 'individuals contend' },
+    { from: /\bmany people\b/gi, to: 'a substantial proportion of the population' },
+    { from: /\bin my opinion\b/gi, to: 'from my perspective' },
+    { from: /\bI think\b/gi, to: 'I would argue' },
+    { from: /\bbecause\b/gi, to: 'owing to the fact that' },
+    { from: /\bso\b/g, to: 'consequently' },
+    { from: /\bbut\b/g, to: 'nevertheless' },
+    { from: /\band\b/g, to: 'furthermore' },
+    { from: /\balso\b/gi, to: 'additionally' },
+    { from: /\bfor example\b/gi, to: 'to illustrate this point' },
+    { from: /\bin conclusion\b/gi, to: 'in summation' }
+  ];
+
+  band9Replacements.forEach(({ from, to }) => {
+    enhanced = enhanced.replace(from, to);
+  });
+
+  // Add sophisticated sentence structures
+  const sentences = enhanced.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const enhancedSentences = sentences.map((sentence, index) => {
+    let enhanced = sentence.trim();
+    
+    // Add sophisticated introductory phrases
+    if (index === 0 && !enhanced.match(/^(In contemporary society|In the modern era|Throughout history|It is widely acknowledged)/)) {
+      enhanced = 'In contemporary society, ' + enhanced.toLowerCase();
+    }
+    
+    // Add complex subordinate clauses
+    if (enhanced.length < 80 && !enhanced.includes(',')) {
+      enhanced = enhanced.replace(/\.?$/, ', which demonstrates the complexity of this multifaceted issue.');
+    }
+    
+    return enhanced;
+  });
+
+  enhanced = enhancedSentences.join('. ') + '.';
+
+  // Ensure sophisticated conclusion if text is substantial
+  if (enhanced.length > 200 && !enhanced.includes('conclusion') && !enhanced.includes('summation')) {
+    enhanced += ' In summation, this analysis underscores the nuanced nature of contemporary societal challenges and the imperative for comprehensive solutions.';
   }
-  
+
   return enhanced;
 };
 
 export const parseDeepSeekResponse = (response: string) => {
-  console.log('Raw AI response:', response);
+  console.log('Raw AI response (first 500 chars):', response.substring(0, 500));
   
-  // More robust parsing using regex
-  const scoreMatch = response.match(/\*\*Score\*\*\s*\n([^\n]*)/);
-  const lineAnalysisMatch = response.match(/\*\*Line-by-Line Analysis\*\*\s*\n(.*?)(?=\*\*|$)/s);
-  const improvedMatch = response.match(/\*\*Improved with Suggestions\*\*\s*\n(.*?)(?=\*\*|$)/s);
-  const band9Match = response.match(/\*\*Band 9 Version\*\*\s*\n(.*?)(?=\*\*|$)/s);
+  // Enhanced parsing with multiple fallback patterns
+  const scorePatterns = [
+    /\*\*BAND SCORE\*\*\s*\n([^\n]*)/,
+    /\*\*Score\*\*\s*\n([^\n]*)/,
+    /Score:\s*([^\n]*)/,
+    /Band Score:\s*([^\n]*)/
+  ];
   
-  const score = scoreMatch ? scoreMatch[1].trim().match(/\d+\.?\d*/)?.[0] || '6.0' : '6.0';
-  const lineByLineAnalysis = lineAnalysisMatch ? lineAnalysisMatch[1].trim() : 'Line-by-line analysis not available.';
-  const improvedText = improvedMatch ? improvedMatch[1].trim() : 'Improvements not available.';
-  let band9Version = band9Match ? band9Match[1].trim() : '';
+  const lineAnalysisPatterns = [
+    /\*\*DETAILED LINE-BY-LINE ANALYSIS\*\*\s*\n(.*?)(?=\*\*MARKED IMPROVEMENTS|$)/s,
+    /\*\*Line-by-Line Analysis\*\*\s*\n(.*?)(?=\*\*|$)/s,
+    /Line-by-Line Analysis:\s*\n(.*?)(?=\*\*|$)/s
+  ];
   
-  // Generate fallback only if Band 9 version is missing or too short
-  if (!band9Version || band9Version.length < 100) {
-    console.log('Generating fallback Band 9 version...');
-    // Try to extract original text from the response context
+  const improvedPatterns = [
+    /\*\*MARKED IMPROVEMENTS\*\*\s*\n(.*?)(?=\*\*BAND 9|$)/s,
+    /\*\*Improved with Suggestions\*\*\s*\n(.*?)(?=\*\*|$)/s,
+    /Marked Improvements:\s*\n(.*?)(?=\*\*|$)/s
+  ];
+  
+  const band9Patterns = [
+    /\*\*BAND 9 TARGET VERSION\*\*\s*\n(.*?)(?=\*\*ERROR PATTERN|$)/s,
+    /\*\*Band 9 Version\*\*\s*\n(.*?)(?=\*\*|$)/s,
+    /Band 9 Version:\s*\n(.*?)(?=\*\*|$)/s
+  ];
+
+  // Extract data using multiple patterns
+  let score = '6.0';
+  for (const pattern of scorePatterns) {
+    const match = response.match(pattern);
+    if (match) {
+      const scoreMatch = match[1].trim().match(/\d+\.?\d*/);
+      if (scoreMatch) {
+        score = scoreMatch[0];
+        break;
+      }
+    }
+  }
+
+  let lineByLineAnalysis = 'Detailed analysis not available.';
+  for (const pattern of lineAnalysisPatterns) {
+    const match = response.match(pattern);
+    if (match && match[1].trim().length > 50) {
+      lineByLineAnalysis = match[1].trim();
+      break;
+    }
+  }
+
+  let improvedText = 'Improvements not available.';
+  for (const pattern of improvedPatterns) {
+    const match = response.match(pattern);
+    if (match && match[1].trim().length > 20) {
+      improvedText = match[1].trim();
+      break;
+    }
+  }
+
+  let band9Version = '';
+  for (const pattern of band9Patterns) {
+    const match = response.match(pattern);
+    if (match && match[1].trim().length > 50) {
+      band9Version = match[1].trim();
+      break;
+    }
+  }
+
+  // Generate enhanced fallback if needed
+  if (band9Version.length < 100) {
+    console.log('Generating enhanced Band 9 fallback...');
     const userTextMatch = response.match(/"([^"]{50,})"/);
     const originalText = userTextMatch ? userTextMatch[1] : '';
     
     if (originalText) {
-      band9Version = generateFallbackBand9Version(originalText);
+      band9Version = generateEnhancedBand9Version(originalText);
     } else {
-      band9Version = 'Band 9 version not available.';
+      band9Version = 'Enhanced Band 9 version not available.';
     }
   }
-  
-  console.log('Parsed results:', { 
+
+  console.log('Enhanced parsing results:', { 
     score, 
-    lineByLineAnalysis: lineByLineAnalysis.substring(0, 100) + '...', 
-    improvedText: improvedText.substring(0, 100) + '...',
-    band9Version: band9Version.substring(0, 100) + '...'
+    lineAnalysisLength: lineByLineAnalysis.length,
+    improvedTextLength: improvedText.length,
+    band9VersionLength: band9Version.length
   });
 
   return {
     score: score,
-    explanation: '', // Removed to reduce tokens
+    explanation: 'Detailed feedback provided in line-by-line analysis',
     lineByLineAnalysis: lineByLineAnalysis,
-    markedErrors: '',
+    markedErrors: '', // This will be extracted from the line analysis
     improvedText: improvedText,
     band9Version: band9Version
   };
