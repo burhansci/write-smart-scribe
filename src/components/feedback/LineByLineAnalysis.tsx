@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { List, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Lightbulb, Target } from "lucide-react";
+import { List, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Lightbulb, Target, Zap } from "lucide-react";
 
 interface LineByLineAnalysisProps {
   originalText: string;
@@ -14,33 +14,38 @@ interface LineByLineAnalysisProps {
 interface LineAnalysis {
   lineNumber: number;
   sentence: string;
-  issues: string;
-  suggestions: string;
+  taskResponse: string;
+  cohesion: string;
+  vocabulary: string;
+  grammar: string;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
+  fixes: string;
   hasIssues: boolean;
-  severity: 'high' | 'medium' | 'low' | 'none';
 }
 
 const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnalysisProps) => {
   const [expandedLines, setExpandedLines] = useState<number[]>([]);
 
-  const parseDetailedLineAnalysis = (): LineAnalysis[] => {
+  const parseEnhancedLineAnalysis = (): LineAnalysis[] => {
     const lines: LineAnalysis[] = [];
     const sentences = originalText.split(/[.!?]+/).filter(s => s.trim().length > 0);
     
-    console.log('Parsing detailed line analysis:', lineByLineAnalysis);
+    console.log('Parsing enhanced analysis:', lineByLineAnalysis);
     
     sentences.forEach((sentence, index) => {
       const lineNumber = index + 1;
-      let issues = '';
-      let suggestions = '';
+      let taskResponse = '';
+      let cohesion = '';
+      let vocabulary = '';
+      let grammar = '';
+      let severity: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE' = 'NONE';
+      let fixes = '';
       let hasIssues = false;
-      let severity: 'high' | 'medium' | 'low' | 'none' = 'none';
       
-      // Look for this line's analysis in the AI response with more flexible matching
+      // Enhanced pattern matching for detailed analysis
       const linePatterns = [
-        new RegExp(`Line ${lineNumber}:.*?(?=Line ${lineNumber + 1}:|$)`, 's'),
-        new RegExp(`${lineNumber}\\..*?(?=${lineNumber + 1}\\.|$)`, 's'),
-        new RegExp(`Sentence ${lineNumber}:.*?(?=Sentence ${lineNumber + 1}:|$)`, 's')
+        new RegExp(`Sentence ${lineNumber}:.*?(?=Sentence ${lineNumber + 1}:|\\*\\*|$)`, 's'),
+        new RegExp(`${lineNumber}\\..*?(?=${lineNumber + 1}\\.|\\*\\*|$)`, 's')
       ];
       
       let lineMatch = null;
@@ -51,133 +56,170 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
       
       if (lineMatch) {
         const lineContent = lineMatch[0];
-        console.log(`Found analysis for line ${lineNumber}:`, lineContent);
         
-        // Extract issues with multiple patterns
-        const issuesPatterns = [
-          /Issues:\s*([^\n]*(?:\n(?!Suggestions:)[^\n]*)*)/s,
-          /Problems:\s*([^\n]*(?:\n(?!Suggestions:)[^\n]*)*)/s,
-          /Errors:\s*([^\n]*(?:\n(?!Suggestions:)[^\n]*)*)/s
-        ];
+        // Extract each criterion with robust patterns
+        const taskResponseMatch = lineContent.match(/•\s*TASK RESPONSE:\s*([^\n•]+)/i);
+        taskResponse = taskResponseMatch ? taskResponseMatch[1].trim() : '';
         
-        for (const pattern of issuesPatterns) {
-          const match = lineContent.match(pattern);
-          if (match) {
-            issues = match[1].trim();
-            break;
-          }
+        const cohesionMatch = lineContent.match(/•\s*COHERENCE & COHESION:\s*([^\n•]+)/i);
+        cohesion = cohesionMatch ? cohesionMatch[1].trim() : '';
+        
+        const vocabularyMatch = lineContent.match(/•\s*LEXICAL RESOURCE:\s*([^\n•]+)/i);
+        vocabulary = vocabularyMatch ? vocabularyMatch[1].trim() : '';
+        
+        const grammarMatch = lineContent.match(/•\s*GRAMMATICAL ACCURACY:\s*([^\n•]+)/i);
+        grammar = grammarMatch ? grammarMatch[1].trim() : '';
+        
+        const severityMatch = lineContent.match(/•\s*SEVERITY:\s*([^\n•]+)/i);
+        if (severityMatch) {
+          const severityText = severityMatch[1].trim().toUpperCase();
+          if (severityText.includes('HIGH')) severity = 'HIGH';
+          else if (severityText.includes('MEDIUM')) severity = 'MEDIUM';
+          else if (severityText.includes('LOW')) severity = 'LOW';
         }
         
-        // Extract suggestions with multiple patterns
-        const suggestionsPatterns = [
-          /Suggestions:\s*([^\n]*(?:\n(?!Line \d+:|Sentence \d+:|\d+\.)[^\n]*)*)/s,
-          /Improvements:\s*([^\n]*(?:\n(?!Line \d+:|Sentence \d+:|\d+\.)[^\n]*)*)/s,
-          /Recommendations:\s*([^\n]*(?:\n(?!Line \d+:|Sentence \d+:|\d+\.)[^\n]*)*)/s
-        ];
+        const fixesMatch = lineContent.match(/•\s*SPECIFIC FIXES:\s*([^\n•]+)/i);
+        fixes = fixesMatch ? fixesMatch[1].trim() : '';
         
-        for (const pattern of suggestionsPatterns) {
-          const match = lineContent.match(pattern);
-          if (match) {
-            suggestions = match[1].trim();
-            break;
-          }
-        }
+        // Determine if there are real issues
+        hasIssues = severity !== 'NONE' || 
+                   (taskResponse && !taskResponse.toLowerCase().includes('adequate')) ||
+                   (cohesion && cohesion.toLowerCase().includes('basic')) ||
+                   (vocabulary && vocabulary.toLowerCase().includes('basic')) ||
+                   (grammar && !grammar.toLowerCase().includes('accurate'));
       }
       
-      // Determine if there are issues and their severity
-      if (issues && issues.length > 0) {
-        const lowerIssues = issues.toLowerCase();
-        if (lowerIssues.includes('no issues') || lowerIssues.includes('no major issues') || lowerIssues.includes('acceptable')) {
-          hasIssues = false;
-          severity = 'none';
-        } else if (lowerIssues.includes('grammar') || lowerIssues.includes('error') || lowerIssues.includes('incorrect')) {
-          hasIssues = true;
-          severity = 'high';
-        } else if (lowerIssues.includes('awkward') || lowerIssues.includes('unclear') || lowerIssues.includes('weak')) {
-          hasIssues = true;
-          severity = 'medium';
-        } else {
-          hasIssues = true;
-          severity = 'low';
-        }
-      }
-      
-      // Enhanced fallback analysis if no AI analysis found
-      if (!issues && !suggestions) {
-        console.log(`No AI analysis found for line ${lineNumber}, using enhanced fallback`);
-        const analysisResult = performDetailedFallbackAnalysis(sentence.trim());
-        issues = analysisResult.issues;
-        suggestions = analysisResult.suggestions;
-        hasIssues = analysisResult.hasIssues;
-        severity = analysisResult.severity;
+      // Enhanced fallback analysis if AI analysis not found
+      if (!taskResponse && !cohesion && !vocabulary && !grammar) {
+        console.log(`Using enhanced fallback for line ${lineNumber}`);
+        const fallbackAnalysis = performRobustAnalysis(sentence.trim());
+        taskResponse = fallbackAnalysis.taskResponse;
+        cohesion = fallbackAnalysis.cohesion;
+        vocabulary = fallbackAnalysis.vocabulary;
+        grammar = fallbackAnalysis.grammar;
+        severity = fallbackAnalysis.severity;
+        fixes = fallbackAnalysis.fixes;
+        hasIssues = fallbackAnalysis.hasIssues;
       }
       
       lines.push({
         lineNumber,
         sentence: sentence.trim(),
-        issues: issues || 'No specific issues identified',
-        suggestions: suggestions || 'Consider adding more sophisticated vocabulary or complex structures',
-        hasIssues,
-        severity
+        taskResponse: taskResponse || 'Addresses topic adequately',
+        cohesion: cohesion || 'Basic sentence connection established',
+        vocabulary: vocabulary || 'Standard vocabulary usage',
+        grammar: grammar || 'Generally accurate structure',
+        severity,
+        fixes: fixes || 'Consider enhancing sophistication and precision',
+        hasIssues
       });
     });
     
     return lines;
   };
 
-  const performDetailedFallbackAnalysis = (sentence: string) => {
+  const performRobustAnalysis = (sentence: string) => {
     const issues: string[] = [];
-    const suggestions: string[] = [];
-    let severity: 'high' | 'medium' | 'low' | 'none' = 'none';
+    const criticalIssues: string[] = [];
+    let severity: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE' = 'LOW';
 
-    // Check for common IELTS issues
-    if (sentence.includes(' very ')) {
-      issues.push('Overuse of "very" - too basic for academic writing');
-      suggestions.push('Replace "very" with more sophisticated intensifiers like "exceptionally", "remarkably", or use stronger adjectives');
-      severity = 'medium';
+    // Critical grammar patterns
+    const criticalPatterns = {
+      contractions: /\b(don't|can't|won't|it's|that's|I'm|you're|we're|they're|isn't|aren't)\b/g,
+      articlesErrors: /\b(a|an)\s+(university|unique|honest|hour|European)/gi,
+      subjectVerb: /\b(people|children|students)\s+(is|was|has)\b/gi,
+      doubleNegative: /\b(don't|can't|won't)\s+no\b/gi
+    };
+
+    // Vocabulary issues
+    const vocabPatterns = {
+      basic: /\b(good|bad|nice|big|small|very|really|thing|stuff|people|get|make|do)\b/gi,
+      informal: /\b(gonna|wanna|kinda|sorta|yeah|ok|okay|cool|awesome|amazing)\b/gi,
+      repetitive: /\b(\w+)\b.*\b\1\b/gi,
+      vague: /\b(some|many|lots of|a lot of|things|ways|aspects)\b/gi
+    };
+
+    // Task response analysis
+    let taskResponse = "Addresses the topic appropriately";
+    const wordCount = sentence.split(' ').length;
+    if (wordCount < 8) {
+      taskResponse = "Too brief - lacks sufficient development for the task requirements";
+      issues.push("insufficient development");
+      severity = 'MEDIUM';
+    } else if (wordCount > 40) {
+      taskResponse = "Overly complex - may confuse rather than clarify the point";
+      issues.push("excessive complexity");
+      severity = 'MEDIUM';
     }
 
-    if (sentence.match(/\b(good|bad|nice|big|small)\b/)) {
-      issues.push('Basic vocabulary - not suitable for high band scores');
-      suggestions.push('Use more precise vocabulary: excellent/outstanding, detrimental/adverse, substantial/significant, etc.');
-      severity = 'medium';
+    // Coherence analysis
+    let cohesion = "Basic sentence structure with adequate flow";
+    if (!sentence.match(/\b(however|moreover|furthermore|nevertheless|consequently|therefore|thus|hence|additionally|specifically|particularly|notably)\b/i) && wordCount > 15) {
+      cohesion = "Lacks sophisticated cohesive devices expected for higher band scores";
+      issues.push("basic linking");
+      severity = severity === 'HIGH' ? 'HIGH' : 'MEDIUM';
     }
 
-    if (sentence.includes("don't") || sentence.includes("can't") || sentence.includes("won't")) {
-      issues.push('Contractions are too informal for IELTS academic writing');
-      suggestions.push('Use full forms: do not, cannot, will not for formal academic tone');
-      severity = 'high';
+    // Vocabulary analysis
+    let vocabulary = "Standard vocabulary range for academic writing";
+    if (vocabPatterns.basic.test(sentence)) {
+      vocabulary = "Contains basic vocabulary that significantly limits band score potential";
+      criticalIssues.push("basic vocabulary");
+      severity = 'HIGH';
+    }
+    if (vocabPatterns.informal.test(sentence)) {
+      vocabulary = "Inappropriate informal register completely unsuitable for IELTS academic writing";
+      criticalIssues.push("informal language");
+      severity = 'HIGH';
     }
 
-    if (!sentence.match(/^[A-Z]/) && sentence.length > 3) {
-      issues.push('Sentence should start with capital letter');
-      suggestions.push('Begin sentence with proper capitalization');
-      severity = 'high';
+    // Grammar analysis
+    let grammar = "Generally accurate with appropriate complexity";
+    if (criticalPatterns.contractions.test(sentence)) {
+      grammar = "Contains contractions which are completely inappropriate for formal academic writing";
+      criticalIssues.push("contractions");
+      severity = 'HIGH';
+    }
+    if (criticalPatterns.articlesErrors.test(sentence)) {
+      grammar = "Article usage errors that significantly impact comprehension";
+      criticalIssues.push("article errors");
+      severity = 'HIGH';
+    }
+    if (criticalPatterns.subjectVerb.test(sentence)) {
+      grammar = "Subject-verb agreement errors - major grammatical mistakes";
+      criticalIssues.push("subject-verb disagreement");
+      severity = 'HIGH';
     }
 
-    if (sentence.split(' ').length < 5) {
-      issues.push('Very short sentence - may lack development');
-      suggestions.push('Consider expanding with supporting details, examples, or complex structures');
-      severity = 'low';
-    }
-
-    if (sentence.split(' ').length > 30) {
-      issues.push('Very long sentence - may be difficult to follow');
-      suggestions.push('Consider breaking into shorter, clearer sentences or using better punctuation');
-      severity = 'medium';
-    }
-
-    if (!sentence.match(/\b(however|moreover|furthermore|nevertheless|consequently|therefore|thus|hence)\b/i) && sentence.length > 50) {
-      issues.push('Missing cohesive devices for better flow');
-      suggestions.push('Add linking words like "furthermore", "however", "consequently" to improve coherence');
-      severity = 'low';
+    // Generate specific fixes
+    const allIssues = [...criticalIssues, ...issues];
+    let fixes = "Consider enhancing language sophistication";
+    
+    if (allIssues.length > 0) {
+      const fixSuggestions = [];
+      if (allIssues.includes("basic vocabulary")) {
+        fixSuggestions.push("Replace 'good'→'beneficial/advantageous', 'big'→'substantial/significant'");
+      }
+      if (allIssues.includes("contractions")) {
+        fixSuggestions.push("Change 'don't'→'do not', 'can't'→'cannot'");
+      }
+      if (allIssues.includes("basic linking")) {
+        fixSuggestions.push("Add sophisticated connectors: 'furthermore', 'consequently', 'nevertheless'");
+      }
+      if (allIssues.includes("insufficient development")) {
+        fixSuggestions.push("Expand with specific examples, explanations, or supporting details");
+      }
+      fixes = fixSuggestions.join('; ');
     }
 
     return {
-      issues: issues.length > 0 ? issues.join('; ') : '',
-      suggestions: suggestions.length > 0 ? suggestions.join('; ') : '',
-      hasIssues: issues.length > 0,
-      severity: issues.length > 0 ? severity : 'none' as const
+      taskResponse,
+      cohesion,
+      vocabulary,
+      grammar,
+      severity: criticalIssues.length > 0 ? 'HIGH' : severity,
+      fixes,
+      hasIssues: allIssues.length > 0
     };
   };
 
@@ -189,16 +231,16 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
     );
   };
 
-  const lines = parseDetailedLineAnalysis();
+  const lines = parseEnhancedLineAnalysis();
   const totalIssues = lines.filter(line => line.hasIssues).length;
-  const highSeverityIssues = lines.filter(line => line.severity === 'high').length;
-  const mediumSeverityIssues = lines.filter(line => line.severity === 'medium').length;
+  const highSeverityIssues = lines.filter(line => line.severity === 'HIGH').length;
+  const mediumSeverityIssues = lines.filter(line => line.severity === 'MEDIUM').length;
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'high': return 'text-red-600';
-      case 'medium': return 'text-orange-600';
-      case 'low': return 'text-yellow-600';
+      case 'HIGH': return 'text-red-600';
+      case 'MEDIUM': return 'text-orange-600';
+      case 'LOW': return 'text-yellow-600';
       default: return 'text-green-600';
     }
   };
@@ -207,9 +249,9 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
     if (!hasIssues) return <CheckCircle className="w-4 h-4 text-green-500" />;
     
     switch (severity) {
-      case 'high': return <AlertCircle className="w-4 h-4 text-red-500" />;
-      case 'medium': return <AlertCircle className="w-4 h-4 text-orange-500" />;
-      case 'low': return <Target className="w-4 h-4 text-yellow-500" />;
+      case 'HIGH': return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'MEDIUM': return <Zap className="w-4 h-4 text-orange-500" />;
+      case 'LOW': return <Target className="w-4 h-4 text-yellow-500" />;
       default: return <CheckCircle className="w-4 h-4 text-green-500" />;
     }
   };
@@ -219,23 +261,23 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <List className="w-5 h-5 text-blue-500" />
-          Detailed Line-by-Line Analysis
+          Enhanced Line-by-Line Analysis
         </CardTitle>
         <div className="flex flex-wrap gap-2 text-sm">
           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
             {lines.length} sentences analyzed
           </Badge>
           <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-            {totalIssues} issues found
+            {totalIssues} issues detected
           </Badge>
           {highSeverityIssues > 0 && (
             <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              {highSeverityIssues} critical
+              {highSeverityIssues} critical errors
             </Badge>
           )}
           {mediumSeverityIssues > 0 && (
             <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-              {mediumSeverityIssues} moderate
+              {mediumSeverityIssues} moderate issues
             </Badge>
           )}
         </div>
@@ -261,12 +303,12 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                        Line {line.lineNumber}
+                        Sentence {line.lineNumber}
                       </span>
                       {getSeverityIcon(line.severity, line.hasIssues)}
                       {line.hasIssues && (
                         <span className={`text-xs font-medium ${getSeverityColor(line.severity)}`}>
-                          {line.severity.toUpperCase()}
+                          {line.severity}
                         </span>
                       )}
                     </div>
@@ -280,26 +322,53 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
             </CollapsibleTrigger>
             
             <CollapsibleContent className="pl-7 pr-3 pb-3 space-y-3">
-              {line.hasIssues && (
-                <div className={`${line.severity === 'high' ? 'bg-red-50 border-red-100' : line.severity === 'medium' ? 'bg-orange-50 border-orange-100' : 'bg-yellow-50 border-yellow-100'} p-3 rounded-lg border`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle className={`w-4 h-4 ${getSeverityColor(line.severity)}`} />
-                    <span className={`font-medium ${getSeverityColor(line.severity).replace('text-', 'text-').replace('600', '800')}`}>
-                      Issues Identified
-                    </span>
-                  </div>
-                  <p className={`text-sm ${getSeverityColor(line.severity).replace('600', '700')}`}>
-                    {line.issues}
-                  </p>
-                </div>
-              )}
-              
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+              {/* Task Response */}
+              <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
                 <div className="flex items-center gap-2 mb-2">
-                  <Lightbulb className="w-4 h-4 text-blue-600" />
-                  <span className="font-medium text-blue-800">Specific Suggestions</span>
+                  <Target className="w-4 h-4 text-purple-600" />
+                  <span className="font-medium text-purple-800">Task Response</span>
                 </div>
-                <p className="text-sm text-blue-700">{line.suggestions}</p>
+                <p className="text-sm text-purple-700">{line.taskResponse}</p>
+              </div>
+
+              {/* Coherence & Cohesion */}
+              <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Zap className="w-4 h-4 text-indigo-600" />
+                  <span className="font-medium text-indigo-800">Coherence & Cohesion</span>
+                </div>
+                <p className="text-sm text-indigo-700">{line.cohesion}</p>
+              </div>
+
+              {/* Lexical Resource */}
+              <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="w-4 h-4 text-emerald-600" />
+                  <span className="font-medium text-emerald-800">Lexical Resource</span>
+                </div>
+                <p className="text-sm text-emerald-700">{line.vocabulary}</p>
+              </div>
+
+              {/* Grammatical Accuracy */}
+              <div className="bg-teal-50 p-3 rounded-lg border border-teal-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="w-4 h-4 text-teal-600" />
+                  <span className="font-medium text-teal-800">Grammatical Accuracy</span>
+                </div>
+                <p className="text-sm text-teal-700">{line.grammar}</p>
+              </div>
+
+              {/* Specific Improvements */}
+              <div className={`${line.severity === 'HIGH' ? 'bg-red-50 border-red-100' : line.severity === 'MEDIUM' ? 'bg-orange-50 border-orange-100' : 'bg-blue-50 border-blue-100'} p-3 rounded-lg border`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className={`w-4 h-4 ${getSeverityColor(line.severity)}`} />
+                  <span className={`font-medium ${getSeverityColor(line.severity).replace('text-', 'text-').replace('600', '800')}`}>
+                    Specific Improvements
+                  </span>
+                </div>
+                <p className={`text-sm ${getSeverityColor(line.severity).replace('600', '700')}`}>
+                  {line.fixes}
+                </p>
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -308,7 +377,7 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
         {lines.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <List className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>No line-by-line analysis available</p>
+            <p>No analysis available - please try submitting your text again</p>
           </div>
         )}
       </CardContent>
