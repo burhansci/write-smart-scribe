@@ -157,7 +157,7 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
     if (!sentence.match(/\b(however|moreover|furthermore|nevertheless|consequently|therefore|thus|hence|additionally|specifically|particularly|notably)\b/i) && wordCount > 15) {
       cohesion = "Lacks sophisticated cohesive devices expected for higher band scores";
       issues.push("basic linking");
-      severity = severity === 'HIGH' ? 'HIGH' : 'MEDIUM';
+      if (severity === 'LOW') severity = 'MEDIUM';
     }
 
     // Vocabulary analysis
