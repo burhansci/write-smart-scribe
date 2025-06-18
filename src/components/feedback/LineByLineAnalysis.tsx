@@ -4,168 +4,80 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { List, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Lightbulb, Target, ArrowRight } from "lucide-react";
+import { List, ChevronDown, ChevronRight, AlertCircle, CheckCircle, Lightbulb } from "lucide-react";
 
 interface LineByLineAnalysisProps {
   originalText: string;
   lineByLineAnalysis: string;
 }
 
-interface DetailedIssue {
-  type: string;
-  phrase: string;
-  explanation: string;
-}
-
-interface DetailedSuggestion {
-  original: string;
-  replacement: string;
-  reason: string;
-}
-
 interface LineAnalysis {
   lineNumber: number;
   sentence: string;
-  detailedIssues: DetailedIssue[];
-  detailedSuggestions: DetailedSuggestion[];
-  priority: 'High' | 'Medium' | 'Low';
-  categories: string[];
+  issues: string;
+  suggestions: string;
+  hasIssues: boolean;
 }
 
 const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnalysisProps) => {
   const [expandedLines, setExpandedLines] = useState<number[]>([]);
 
-  const parseDetailedLineAnalysis = (): LineAnalysis[] => {
+  const parseSimpleLineAnalysis = (): LineAnalysis[] => {
     const lines: LineAnalysis[] = [];
     const sentences = originalText.split(/[.!?]+/).filter(s => s.trim().length > 0);
     
-    console.log('Parsing line-by-line analysis:', lineByLineAnalysis);
-    
-    // Enhanced parsing for the new detailed format
-    const lineBlocks = lineByLineAnalysis.split(/Line \d+:/);
+    console.log('Parsing line analysis:', lineByLineAnalysis);
     
     sentences.forEach((sentence, index) => {
       const lineNumber = index + 1;
-      const lineBlock = lineBlocks.find(block => 
-        block.includes(`"${sentence.trim()}"`) || 
-        block.includes(sentence.trim().substring(0, 30))
-      );
+      let issues = '';
+      let suggestions = '';
+      let hasIssues = false;
       
-      let detailedIssues: DetailedIssue[] = [];
-      let detailedSuggestions: DetailedSuggestion[] = [];
-      let priority: 'High' | 'Medium' | 'Low' = 'Low';
+      // Look for this line's analysis in the AI response
+      const linePattern = new RegExp(`Line ${lineNumber}:.*?(?=Line ${lineNumber + 1}:|$)`, 's');
+      const lineMatch = lineByLineAnalysis.match(linePattern);
       
-      if (lineBlock) {
-        // Parse specific issues
-        const issuesMatch = lineBlock.match(/Specific Issues:(.*?)(?=Specific Suggestions:|Priority:|$)/s);
+      if (lineMatch) {
+        const lineContent = lineMatch[0];
+        
+        // Extract issues
+        const issuesMatch = lineContent.match(/Issues:\s*([^\n]*(?:\n(?!Suggestions:)[^\n]*)*)/);
         if (issuesMatch) {
-          const issuesText = issuesMatch[1];
-          const issueMatches = [...issuesText.matchAll(/•\s*([^:]+):\s*"([^"]+)"\s*→\s*Issue:\s*([^\n•]+)/g)];
-          
-          detailedIssues = issueMatches.map(match => ({
-            type: match[1].trim(),
-            phrase: match[2].trim(),
-            explanation: match[3].trim()
-          }));
+          issues = issuesMatch[1].trim();
+          hasIssues = issues.length > 0 && !issues.toLowerCase().includes('no issues');
         }
         
-        // Parse specific suggestions
-        const suggestionsMatch = lineBlock.match(/Specific Suggestions:(.*?)(?=Priority:|$)/s);
+        // Extract suggestions
+        const suggestionsMatch = lineContent.match(/Suggestions:\s*([^\n]*(?:\n(?!Line \d+:)[^\n]*)*)/);
         if (suggestionsMatch) {
-          const suggestionsText = suggestionsMatch[1];
-          const suggestionMatches = [...suggestionsText.matchAll(/•\s*(?:Replace|Change)\s*"([^"]+)"\s*(?:with|to)\s*"([^"]+)"\s*→\s*Reason:\s*([^\n•]+)/g)];
-          
-          detailedSuggestions = suggestionMatches.map(match => ({
-            original: match[1].trim(),
-            replacement: match[2].trim(),
-            reason: match[3].trim()
-          }));
-        }
-        
-        // Parse priority
-        const priorityMatch = lineBlock.match(/Priority:\s*(\w+)/);
-        if (priorityMatch) {
-          priority = priorityMatch[1] as 'High' | 'Medium' | 'Low';
+          suggestions = suggestionsMatch[1].trim();
         }
       }
       
-      // Fallback analysis for sentences without detailed AI feedback
-      if (detailedIssues.length === 0 && detailedSuggestions.length === 0) {
-        const basicIssues = analyzeBasicIssues(sentence.trim());
-        detailedIssues = basicIssues.issues;
-        detailedSuggestions = basicIssues.suggestions;
+      // Fallback basic analysis if no AI analysis found
+      if (!issues && !suggestions) {
+        if (sentence.includes(' very ')) {
+          issues = 'Overuse of "very" - consider stronger adjectives';
+          suggestions = 'Replace "very" with more sophisticated vocabulary';
+          hasIssues = true;
+        } else if (sentence.includes("don't") || sentence.includes("can't")) {
+          issues = 'Contractions are too informal for academic writing';
+          suggestions = 'Use full forms (do not, cannot) for formal tone';
+          hasIssues = true;
+        }
       }
-      
-      const categories = extractCategories(detailedIssues.map(i => i.type).join(', '));
       
       lines.push({
         lineNumber,
         sentence: sentence.trim(),
-        detailedIssues,
-        detailedSuggestions,
-        priority,
-        categories
+        issues: issues || 'No specific issues identified',
+        suggestions: suggestions || 'Sentence structure is acceptable',
+        hasIssues
       });
     });
     
     return lines;
-  };
-
-  const analyzeBasicIssues = (sentence: string) => {
-    const issues: DetailedIssue[] = [];
-    const suggestions: DetailedSuggestion[] = [];
-    
-    // Basic analysis when AI doesn't provide detailed feedback
-    if (sentence.includes(' very ')) {
-      issues.push({
-        type: 'Word Choice',
-        phrase: 'very',
-        explanation: 'Overused intensifier in academic writing'
-      });
-      suggestions.push({
-        original: 'very',
-        replacement: 'significantly/considerably/extremely',
-        reason: 'More sophisticated vocabulary for academic writing'
-      });
-    }
-    
-    if (sentence.includes(' alot ')) {
-      issues.push({
-        type: 'Spelling',
-        phrase: 'alot',
-        explanation: 'Incorrect spelling of "a lot"'
-      });
-      suggestions.push({
-        original: 'alot',
-        replacement: 'a lot',
-        reason: 'Correct spelling improves accuracy'
-      });
-    }
-    
-    if (sentence.match(/\b(don't|can't|won't|isn't|aren't)\b/)) {
-      const contraction = sentence.match(/\b(don't|can't|won't|isn't|aren't)\b/)?.[0] || '';
-      issues.push({
-        type: 'Style',
-        phrase: contraction,
-        explanation: 'Contractions are too informal for academic writing'
-      });
-    }
-    
-    return { issues, suggestions };
-  };
-
-  const extractCategories = (issues: string): string[] => {
-    const categories = [];
-    const issuesLower = issues.toLowerCase();
-    
-    if (issuesLower.includes('vocabulary') || issuesLower.includes('word choice')) categories.push('Vocabulary');
-    if (issuesLower.includes('grammar') || issuesLower.includes('tense')) categories.push('Grammar');
-    if (issuesLower.includes('spelling')) categories.push('Spelling');
-    if (issuesLower.includes('punctuation')) categories.push('Punctuation');
-    if (issuesLower.includes('phrasing') || issuesLower.includes('clarity')) categories.push('Phrasing');
-    if (issuesLower.includes('style') || issuesLower.includes('tone')) categories.push('Style');
-    
-    return categories;
   };
 
   const toggleLine = (lineNumber: number) => {
@@ -176,44 +88,8 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
     );
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'High': return 'bg-red-100 text-red-800 border-red-200';
-      case 'Medium': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'Low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      'Vocabulary': 'bg-blue-100 text-blue-800',
-      'Grammar': 'bg-red-100 text-red-800',
-      'Spelling': 'bg-yellow-100 text-yellow-800',
-      'Punctuation': 'bg-purple-100 text-purple-800',
-      'Phrasing': 'bg-indigo-100 text-indigo-800',
-      'Style': 'bg-pink-100 text-pink-800'
-    };
-    return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
-
-  const highlightIssues = (sentence: string, issues: DetailedIssue[]) => {
-    let highlightedSentence = sentence;
-    
-    issues.forEach(issue => {
-      const regex = new RegExp(`\\b${issue.phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-      highlightedSentence = highlightedSentence.replace(
-        regex, 
-        `<mark class="bg-red-200 px-1 rounded">${issue.phrase}</mark>`
-      );
-    });
-    
-    return highlightedSentence;
-  };
-
-  const lines = parseDetailedLineAnalysis();
-  const totalIssues = lines.reduce((sum, line) => sum + line.detailedIssues.length, 0);
-  const highPriorityIssues = lines.filter(line => line.priority === 'High').length;
+  const lines = parseSimpleLineAnalysis();
+  const totalIssues = lines.filter(line => line.hasIssues).length;
 
   return (
     <Card>
@@ -227,13 +103,8 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
             {lines.length} sentences analyzed
           </Badge>
           <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-            {totalIssues} total issues
+            {totalIssues} issues found
           </Badge>
-          {highPriorityIssues > 0 && (
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              {highPriorityIssues} high priority
-            </Badge>
-          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -259,99 +130,39 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
                       <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
                         Line {line.lineNumber}
                       </span>
-                      {line.detailedIssues.length > 0 && (
-                        <>
-                          <Badge className={getPriorityColor(line.priority)}>
-                            {line.priority}
-                          </Badge>
-                          <span className="text-xs text-gray-500">
-                            {line.detailedIssues.length} issue{line.detailedIssues.length !== 1 ? 's' : ''}
-                          </span>
-                        </>
-                      )}
-                      {line.detailedIssues.length === 0 && (
+                      {line.hasIssues ? (
+                        <AlertCircle className="w-4 h-4 text-orange-500" />
+                      ) : (
                         <CheckCircle className="w-4 h-4 text-green-500" />
                       )}
                     </div>
                     
                     <div className="text-sm text-gray-700 leading-relaxed">
-                      <span 
-                        dangerouslySetInnerHTML={{ 
-                          __html: `"${highlightIssues(line.sentence, line.detailedIssues)}"` 
-                        }} 
-                      />
+                      "{line.sentence}"
                     </div>
-                    
-                    {line.categories.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {line.categories.map((category, idx) => (
-                          <Badge key={idx} variant="outline" className={`text-xs ${getCategoryColor(category)}`}>
-                            {category}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               </Button>
             </CollapsibleTrigger>
             
             <CollapsibleContent className="pl-7 pr-3 pb-3 space-y-3">
-              {line.detailedIssues.length > 0 && (
-                <div className="bg-red-50 p-3 rounded-lg border border-red-100">
-                  <div className="flex items-center gap-2 mb-3">
-                    <AlertCircle className="w-4 h-4 text-red-600" />
-                    <span className="font-medium text-red-800">Specific Issues Found</span>
+              {line.hasIssues && (
+                <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="w-4 h-4 text-orange-600" />
+                    <span className="font-medium text-orange-800">Issues Found</span>
                   </div>
-                  <div className="space-y-2">
-                    {line.detailedIssues.map((issue, idx) => (
-                      <div key={idx} className="bg-white p-2 rounded border border-red-200">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="bg-red-100 text-red-700 text-xs">
-                            {issue.type}
-                          </Badge>
-                          <code className="bg-red-100 text-red-800 px-1 rounded text-xs">
-                            "{issue.phrase}"
-                          </code>
-                        </div>
-                        <p className="text-sm text-red-700">{issue.explanation}</p>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-sm text-orange-700">{line.issues}</p>
                 </div>
               )}
               
-              {line.detailedSuggestions.length > 0 && (
-                <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Lightbulb className="w-4 h-4 text-green-600" />
-                    <span className="font-medium text-green-800">Specific Suggestions</span>
-                  </div>
-                  <div className="space-y-2">
-                    {line.detailedSuggestions.map((suggestion, idx) => (
-                      <div key={idx} className="bg-white p-2 rounded border border-green-200">
-                        <div className="flex items-center gap-2 mb-1 text-sm">
-                          <code className="bg-red-100 text-red-800 px-1 rounded text-xs">
-                            "{suggestion.original}"
-                          </code>
-                          <ArrowRight className="w-3 h-3 text-gray-500" />
-                          <code className="bg-green-100 text-green-800 px-1 rounded text-xs">
-                            "{suggestion.replacement}"
-                          </code>
-                        </div>
-                        <p className="text-sm text-green-700">{suggestion.reason}</p>
-                      </div>
-                    ))}
-                  </div>
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="w-4 h-4 text-blue-600" />
+                  <span className="font-medium text-blue-800">Suggestions</span>
                 </div>
-              )}
-              
-              {line.detailedIssues.length === 0 && line.detailedSuggestions.length === 0 && (
-                <div className="bg-green-50 p-3 rounded-lg border border-green-100 text-center">
-                  <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                  <span className="text-sm text-green-700">This sentence looks good!</span>
-                </div>
-              )}
+                <p className="text-sm text-blue-700">{line.suggestions}</p>
+              </div>
             </CollapsibleContent>
           </Collapsible>
         ))}
