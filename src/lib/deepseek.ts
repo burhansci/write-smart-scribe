@@ -99,7 +99,7 @@ export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<stri
       model: "deepseek-ai/DeepSeek-V3-0324",
       messages: messages,
       temperature: 0.1,
-      max_tokens: 4500,
+      max_tokens: 4000,
       top_p: 0.95,
       stream: false
     });
