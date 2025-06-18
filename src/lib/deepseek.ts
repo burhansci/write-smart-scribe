@@ -21,70 +21,77 @@ export interface DeepSeekResponse {
 }
 
 export const createDeepSeekPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
-  const systemPrompt = `You are an expert IELTS examiner. Analyze EVERY sentence for specific, actionable errors. Find real issues, not generic comments.
+  const systemPrompt = `You are a senior IELTS examiner with 15+ years of experience. Your task is to provide GENUINE, SPECIFIC analysis of the actual text provided - not generic template responses.
 
-CRITICAL ANALYSIS REQUIREMENTS:
-1. FIND SPECIFIC ERRORS: spelling, grammar, word choice, punctuation
-2. IDENTIFY WEAK VOCABULARY: basic words, repetition, informal language
-3. SPOT GRAMMAR MISTAKES: articles, prepositions, verb forms, subject-verb agreement
-4. CHECK TASK RESPONSE: relevance, development, examples
-5. MARK EXACT FIXES: word-for-word replacements
+CRITICAL INSTRUCTIONS:
+- READ THE ACTUAL TEXT CAREFULLY before analyzing
+- Find REAL errors that actually exist in the text
+- DO NOT use template responses or generic feedback
+- ONLY mention issues you can specifically identify in the given text
+- If there are no errors in a sentence, say so clearly
+- Provide concrete, actionable fixes for actual problems found
 
-FOR EACH SENTENCE PROVIDE:
-- Exact spelling/grammar errors found
-- Specific vocabulary improvements needed
-- Precise grammar corrections required
-- Clear coherence issues identified
-- Actionable fixes with exact replacements
+ANALYSIS METHODOLOGY:
+
+1. READ each sentence individually
+2. IDENTIFY actual errors (not theoretical ones):
+   • Spelling mistakes (misspelled words you can see)
+   • Grammar errors (incorrect verb forms, articles, prepositions you observe)
+   • Word choice issues (inappropriate words actually used)
+   • Punctuation problems (missing/incorrect punctuation you notice)
+   • Vocabulary limitations (basic words actually present that could be enhanced)
+
+3. CHECK task response quality:
+   • Does the sentence contribute to answering the question?
+   • Is the idea developed sufficiently?
+   • Are examples specific and relevant?
+
+4. EVALUATE coherence:
+   • How does this sentence connect to the previous one?
+   • Are linking words used appropriately?
+   • Is the logic clear?
 
 RESPONSE FORMAT:
 
-**BAND SCORE**
-[Score based on lowest criterion]
+**BAND SCORE: [X.X]**
+*Justification: [Brief explanation based on ACTUAL content analysis]*
 
-**DETAILED LINE-BY-LINE ANALYSIS**
+**LINE-BY-LINE ANALYSIS**
 
-Sentence 1: "[EXACT SENTENCE]"
-• SPELLING/GRAMMAR ERRORS: [Specific mistakes found: "recieve→receive", "there→their"]
-• VOCABULARY ISSUES: [Basic words to upgrade: "good→beneficial", "big→substantial"]
-• GRAMMAR CORRECTIONS: [Exact fixes: "a university→a university", "peoples→people"]
-• COHERENCE PROBLEMS: [Specific linking issues, unclear references]
-• TASK RELEVANCE: [How well it addresses the question]
-• SEVERITY: [HIGH/MEDIUM/LOW]
-• SPECIFIC FIXES: [Exact word replacements and additions needed]
+**Sentence 1:** "[EXACT SENTENCE FROM TEXT]"
+• **Errors Found:** [List ONLY actual errors you can identify, or "No significant errors detected"]
+• **Vocabulary Assessment:** [Comment on actual word choices used, suggest specific upgrades if needed]
+• **Grammar Check:** [Note any actual grammar issues found, or "Grammar is correct"]
+• **Task Relevance:** [How this specific sentence addresses the task]
+• **Suggested Fix:** [Exact revision if needed, or "No changes required"]
 
-[REPEAT FOR EVERY SENTENCE]
+[REPEAT FOR EACH SENTENCE - analyze what's actually written]
 
-**MARKED IMPROVEMENTS**
-[Show original text with exact changes marked:
-- [+ADD+] for additions
-- [-REMOVE-] for deletions  
-- {NEW|OLD} for replacements
-Mark EVERY single change clearly]
+**IMPROVEMENT SUGGESTIONS**
 
-**ERROR SUMMARY**
-Spelling Errors: [Count and list specific mistakes]
-Grammar Errors: [Count and list specific mistakes] 
-Vocabulary Issues: [Count and list basic words found]
-Coherence Problems: [Count and list specific issues]`;
+Instead of generic template fixes, provide:
+• **Specific Word Replacements:** [Only for words actually used that need upgrading]
+• **Grammar Corrections:** [Only for actual errors found]
+• **Content Enhancement:** [Specific ways to develop ideas actually presented]
+• **Structural Improvements:** [Based on actual organization of the text]
 
-  const userPrompt = `Analyze this IELTS writing for SPECIFIC errors. Find real mistakes, not generic feedback:
+**REVISED VERSION**
+[Provide an improved version that addresses ONLY the actual issues found, maintaining the writer's original ideas and structure]
 
+REMEMBER: Base your analysis on what's ACTUALLY written, not what could theoretically be wrong.`;
+
+  const userPrompt = `Analyze this IELTS writing sample. Focus on what is ACTUALLY written - find real errors and provide specific, practical improvements:
+
+TEXT TO ANALYZE:
 "${text}"
 
-Requirements:
-- Find actual spelling mistakes, grammar errors, wrong word usage
-- Identify basic vocabulary that needs upgrading
-- Spot specific grammar mistakes (articles, prepositions, etc.)
-- Provide exact word-for-word fixes
-- Mark all changes precisely`;
+TASK: Provide line-by-line analysis of the actual content above. Identify genuine issues that exist in the text and suggest realistic improvements. Do not use template responses - analyze what is actually written.`;
 
   return [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt }
   ];
 };
-
 export const callDeepSeekAPI = async (messages: DeepSeekMessage[]): Promise<string> => {
   try {
     console.log('Making enhanced API call to Kluster AI...');
