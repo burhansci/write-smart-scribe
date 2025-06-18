@@ -280,6 +280,31 @@ const countSpellingErrors = (text: string): string => {
   return commonMistakes ? `${commonMistakes.length} found: ${commonMistakes.join(', ')}` : 'None detected';
 };
 
+const countGrammarErrors = (text: string): string => {
+  const grammarPatterns = [
+    /\ban university\b/gi,
+    /\bpeople is\b/gi,
+    /\bmuch people\b/gi,
+    /\bless people\b/gi,
+    /\bin the other hand\b/gi,
+    /\bdepends of\b/gi,
+    /\bmore better\b/gi,
+    /\bmore faster\b/gi,
+    /\bdidn't went\b/gi,
+    /\bdidn't saw\b/gi
+  ];
+
+  const issues = [];
+  grammarPatterns.forEach(pattern => {
+    const matches = text.match(pattern);
+    if (matches) {
+      issues.push(...matches.map(match => match.toLowerCase()));
+    }
+  });
+
+  return issues.length > 0 ? `${issues.length} found: ${issues.join(', ')}` : 'None detected';
+};
+
 const countVocabIssues = (text: string): string => {
   const issues = [];
   if (text.match(/\b(good|bad|big|small|very)\b/gi)) issues.push("Basic vocabulary");
