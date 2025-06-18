@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Send, BookOpen, PenTool } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { WritingSubmission, AIFeedback } from "@/pages/Index";
-import { createOptimizedIELTSPrompt, callOptimizedIELTSAPI, parseOptimizedIELTSResponse } from "@/lib/deepseek";
+import { createDeepSeekPrompt, callDeepSeekAPI, parseDeepSeekResponse } from "@/lib/deepseek";
 
 interface WritingEditorProps {
   onSubmissionComplete: (submission: WritingSubmission) => void;
@@ -65,11 +64,11 @@ const WritingEditor = ({ onSubmissionComplete, onChooseQuestion }: WritingEditor
 
     try {
       console.log('Starting Kluster AI analysis...');
-      const messages = createOptimizedIELTSPrompt(text, 'IELTS');
-      const response = await callOptimizedIELTSAPI(messages);
+      const messages = createDeepSeekPrompt(text, 'IELTS');
+      const response = await callDeepSeekAPI(messages);
       console.log('Kluster AI response:', response);
       
-      const parsedFeedback = parseOptimizedIELTSResponse(response);
+      const parsedFeedback = parseDeepSeekResponse(response);
       console.log('Parsed feedback:', parsedFeedback);
       
       const feedback: AIFeedback = {
