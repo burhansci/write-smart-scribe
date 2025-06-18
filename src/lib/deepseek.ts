@@ -1,4 +1,3 @@
-
 import { OpenAI } from "openai";
 
 // Kluster AI configuration with R1 model
@@ -22,69 +21,63 @@ export interface DeepSeekResponse {
 }
 
 export const createDeepSeekPrompt = (text: string, scoringSystem: 'IELTS'): DeepSeekMessage[] => {
-  const systemPrompt = `You are a world-class IELTS examiner with 20+ years of experience. Your analysis MUST be extremely detailed, critical, and specific. You MUST find issues in EVERY sentence unless it's genuinely Band 9 quality.
+  const systemPrompt = `You are an expert IELTS examiner. Analyze EVERY sentence for specific, actionable errors. Find real issues, not generic comments.
 
-CRITICAL REQUIREMENTS:
-1. ANALYZE EVERY SINGLE SENTENCE with surgical precision
-2. FIND SPECIFIC ERRORS - grammar, vocabulary, coherence, task response
-3. PROVIDE EXACT WORD-FOR-WORD REPLACEMENTS
-4. BE HIGHLY CRITICAL - most writing has 3-5 issues per sentence
-5. MARK ALL CHANGES with precise notation
+CRITICAL ANALYSIS REQUIREMENTS:
+1. FIND SPECIFIC ERRORS: spelling, grammar, word choice, punctuation
+2. IDENTIFY WEAK VOCABULARY: basic words, repetition, informal language
+3. SPOT GRAMMAR MISTAKES: articles, prepositions, verb forms, subject-verb agreement
+4. CHECK TASK RESPONSE: relevance, development, examples
+5. MARK EXACT FIXES: word-for-word replacements
 
-RESPONSE FORMAT (FOLLOW EXACTLY):
+FOR EACH SENTENCE PROVIDE:
+- Exact spelling/grammar errors found
+- Specific vocabulary improvements needed
+- Precise grammar corrections required
+- Clear coherence issues identified
+- Actionable fixes with exact replacements
+
+RESPONSE FORMAT:
 
 **BAND SCORE**
-[Single number: X.X based on lowest criterion]
+[Score based on lowest criterion]
 
 **DETAILED LINE-BY-LINE ANALYSIS**
 
-Sentence 1: "[EXACT SENTENCE FROM TEXT]"
-• TASK RESPONSE: [Specific relevance issues, missing examples, weak development]
-• COHERENCE & COHESION: [Exact linking problems, flow issues, unclear references]
-• LEXICAL RESOURCE: [Precise vocabulary errors - word choice, collocation, repetition, register]
-• GRAMMATICAL ACCURACY: [Specific grammar errors - articles, tenses, structures, punctuation]
-• SEVERITY: [HIGH/MEDIUM/LOW based on impact on comprehension]
-• SPECIFIC FIXES: [Exact word replacements: "change X to Y", "add Z before W"]
+Sentence 1: "[EXACT SENTENCE]"
+• SPELLING/GRAMMAR ERRORS: [Specific mistakes found: "recieve→receive", "there→their"]
+• VOCABULARY ISSUES: [Basic words to upgrade: "good→beneficial", "big→substantial"]
+• GRAMMAR CORRECTIONS: [Exact fixes: "a university→a university", "peoples→people"]
+• COHERENCE PROBLEMS: [Specific linking issues, unclear references]
+• TASK RELEVANCE: [How well it addresses the question]
+• SEVERITY: [HIGH/MEDIUM/LOW]
+• SPECIFIC FIXES: [Exact word replacements and additions needed]
 
-[REPEAT FOR EVERY SENTENCE - NO EXCEPTIONS]
+[REPEAT FOR EVERY SENTENCE]
 
 **MARKED IMPROVEMENTS**
-[Rewrite with EXACT markers:
-- [+ADD+] for new words/phrases
-- [-DELETE-] for removals
-- {REPLACE|ORIGINAL} for substitutions
-Every change must be clearly marked]
-
-**BAND 9 TRANSFORMATION**
-[Complete rewrite maintaining EXACT same ideas but with:
-- Sophisticated academic vocabulary
-- Complex grammatical structures
-- Advanced cohesive devices
-- Formal register throughout]
+[Show original text with exact changes marked:
+- [+ADD+] for additions
+- [-REMOVE-] for deletions  
+- {NEW|OLD} for replacements
+Mark EVERY single change clearly]
 
 **ERROR SUMMARY**
-Critical Grammar Errors: [Count and list]
-Vocabulary Improvements: [Count and list] 
-Coherence Issues: [Count and list]
-Task Response Gaps: [Count and list]
+Spelling Errors: [Count and list specific mistakes]
+Grammar Errors: [Count and list specific mistakes] 
+Vocabulary Issues: [Count and list basic words found]
+Coherence Problems: [Count and list specific issues]`;
 
-ANALYSIS STANDARDS:
-- Find minimum 2-3 specific issues per sentence
-- Provide exact word replacements
-- Mark every single change clearly
-- Be extremely detailed and critical
-- Focus on IELTS band descriptors`;
-
-  const userPrompt = `Analyze this IELTS writing with extreme precision and detail:
+  const userPrompt = `Analyze this IELTS writing for SPECIFIC errors. Find real mistakes, not generic feedback:
 
 "${text}"
 
-REQUIREMENTS:
-- Examine EVERY sentence for ALL four criteria
-- Find specific, actionable errors
-- Provide exact word-by-word improvements
-- Mark all changes clearly
-- Be highly critical - most sentences need improvement`;
+Requirements:
+- Find actual spelling mistakes, grammar errors, wrong word usage
+- Identify basic vocabulary that needs upgrading
+- Spot specific grammar mistakes (articles, prepositions, etc.)
+- Provide exact word-for-word fixes
+- Mark all changes precisely`;
 
   return [
     { role: 'system', content: systemPrompt },
@@ -136,12 +129,13 @@ const generateRobustFallbackResponse = (originalText: string): string => {
   sentences.forEach((sentence, index) => {
     const cleanSentence = sentence.trim();
     if (cleanSentence) {
-      const analysis = performAdvancedSentenceAnalysis(cleanSentence);
+      const analysis = performDetailedSentenceAnalysis(cleanSentence);
       lineAnalysis += `Sentence ${index + 1}: "${cleanSentence}"\n`;
-      lineAnalysis += `• TASK RESPONSE: ${analysis.taskResponse}\n`;
-      lineAnalysis += `• COHERENCE & COHESION: ${analysis.cohesion}\n`;
-      lineAnalysis += `• LEXICAL RESOURCE: ${analysis.vocabulary}\n`;
-      lineAnalysis += `• GRAMMATICAL ACCURACY: ${analysis.grammar}\n`;
+      lineAnalysis += `• SPELLING/GRAMMAR ERRORS: ${analysis.spellingGrammar}\n`;
+      lineAnalysis += `• VOCABULARY ISSUES: ${analysis.vocabulary}\n`;
+      lineAnalysis += `• GRAMMAR CORRECTIONS: ${analysis.grammar}\n`;
+      lineAnalysis += `• COHERENCE PROBLEMS: ${analysis.coherence}\n`;
+      lineAnalysis += `• TASK RELEVANCE: ${analysis.taskRelevance}\n`;
       lineAnalysis += `• SEVERITY: ${analysis.severity}\n`;
       lineAnalysis += `• SPECIFIC FIXES: ${analysis.fixes}\n\n`;
     }
@@ -151,7 +145,7 @@ const generateRobustFallbackResponse = (originalText: string): string => {
   const band9Version = generateSophisticatedBand9(userText);
 
   return `**BAND SCORE**
-6.0
+${calculateBandScore(userText)}
 
 **DETAILED LINE-BY-LINE ANALYSIS**
 ${lineAnalysis}
@@ -163,177 +157,127 @@ ${markedImprovements}
 ${band9Version}
 
 **ERROR SUMMARY**
-Critical Grammar Errors: ${countGrammarErrors(userText)}
-Vocabulary Improvements: ${countVocabIssues(userText)}
-Coherence Issues: ${countCohesionIssues(userText)}
-Task Response Gaps: Needs more specific examples and deeper analysis`;
+Spelling Errors: ${countSpellingErrors(userText)}
+Grammar Errors: ${countGrammarErrors(userText)}
+Vocabulary Issues: ${countVocabIssues(userText)}
+Coherence Problems: ${countCohesionIssues(userText)}`;
 };
 
-const performAdvancedSentenceAnalysis = (sentence: string) => {
-  const issues: string[] = [];
+const performDetailedSentenceAnalysis = (sentence: string) => {
+  const errors: string[] = [];
   const fixes: string[] = [];
   let severity = 'LOW';
 
-  // Advanced pattern detection
-  const patterns = {
-    basicVocab: /\b(good|bad|nice|big|small|very|really|a lot of|lots of|thing|stuff|people|get|make|do)\b/gi,
-    contractions: /\b(don't|can't|won't|it's|that's|I'm|you're|we're|they're|isn't|aren't)\b/g,
-    informalWords: /\b(gonna|wanna|kinda|sorta|yeah|ok|okay|cool|awesome|amazing)\b/gi,
-    repetitiveStarters: /^(I think|I believe|In my opinion|I feel|I want to say)/i,
-    weakLinking: /\b(and|but|so|because)\b/g,
-    vaguePronouns: /\b(this|that|it|they)\b(?!\s+\w)/g,
-    redundancy: /\b(in order to|due to the fact that|despite the fact that|at this point in time)\b/gi,
-    grammarErrors: /\b(a|an)\s+(university|unique|honest|hour)/gi,
-    tenseInconsistency: /\b(will|would|can|could|may|might)\b.*\b(will|would|can|could|may|might)\b/gi
-  };
+  // Common spelling mistakes
+  const spellingErrors = [
+    { wrong: /\brecieve\b/gi, correct: 'receive' },
+    { wrong: /\bachieve\b/gi, correct: 'achieve' },
+    { wrong: /\boccured\b/gi, correct: 'occurred' },
+    { wrong: /\bbeggining\b/gi, correct: 'beginning' },
+    { wrong: /\bdefinately\b/gi, correct: 'definitely' },
+    { wrong: /\bseperate\b/gi, correct: 'separate' },
+    { wrong: /\benvironment\b/gi, correct: 'environment' },
+    { wrong: /\bgovernment\b/gi, correct: 'government' }
+  ];
 
-  // Task Response Analysis
-  let taskResponse = "Adequately addresses the topic";
-  if (sentence.length < 30) {
-    taskResponse = "Too brief - lacks development and supporting details";
-    issues.push("Insufficient sentence development");
-    fixes.push("Expand with specific examples, explanations, or supporting details");
-    severity = 'HIGH';
-  }
+  // Grammar patterns
+  const grammarErrors = [
+    { pattern: /\ba university\b/gi, issue: 'Correct: "a university"', severity: 'LOW' },
+    { pattern: /\ban university\b/gi, issue: 'Should be "a university"', severity: 'HIGH' },
+    { pattern: /\bpeople is\b/gi, issue: 'Should be "people are"', severity: 'HIGH' },
+    { pattern: /\bmuch people\b/gi, issue: 'Should be "many people"', severity: 'HIGH' },
+    { pattern: /\bless people\b/gi, issue: 'Should be "fewer people"', severity: 'MEDIUM' },
+    { pattern: /\bin the other hand\b/gi, issue: 'Should be "on the other hand"', severity: 'MEDIUM' },
+    { pattern: /\bdepends of\b/gi, issue: 'Should be "depends on"', severity: 'HIGH' }
+  ];
 
-  // Coherence & Cohesion Analysis
-  let cohesion = "Basic sentence connection";
-  if (patterns.weakLinking.test(sentence)) {
-    cohesion = "Uses basic linking words - needs sophisticated cohesive devices";
-    issues.push("Basic cohesive devices");
-    fixes.push("Replace with advanced linking: 'furthermore', 'consequently', 'nevertheless'");
-    severity = 'MEDIUM';
-  }
+  // Basic vocabulary that needs upgrading
+  const basicVocab = [
+    { basic: /\bvery good\b/gi, better: 'excellent/outstanding' },
+    { basic: /\bvery bad\b/gi, better: 'terrible/detrimental' },
+    { basic: /\bbig problem\b/gi, better: 'significant issue/major concern' },
+    { basic: /\ba lot of\b/gi, better: 'numerous/substantial' },
+    { basic: /\bget\b/gi, better: 'obtain/acquire/receive' },
+    { basic: /\bmake\b/gi, better: 'create/establish/generate' },
+    { basic: /\bthing\b/gi, better: 'aspect/factor/element' }
+  ];
 
-  // Lexical Resource Analysis
-  let vocabulary = "Standard vocabulary range";
-  if (patterns.basicVocab.test(sentence)) {
-    vocabulary = "Contains basic vocabulary limiting band score potential";
-    issues.push("Basic vocabulary choices");
-    fixes.push("Replace basic words: 'good'→'beneficial/advantageous', 'big'→'substantial/significant'");
-    severity = 'HIGH';
-  }
+  // Check for spelling errors
+  let spellingIssues = [];
+  spellingErrors.forEach(({ wrong, correct }) => {
+    if (wrong.test(sentence)) {
+      spellingIssues.push(`"${sentence.match(wrong)?.[0]}" → "${correct}"`);
+      severity = 'HIGH';
+    }
+  });
 
-  if (patterns.informalWords.test(sentence)) {
-    vocabulary = "Inappropriate informal register for academic writing";
-    issues.push("Informal language detected");
-    fixes.push("Use formal academic expressions appropriate for IELTS");
-    severity = 'HIGH';
-  }
+  // Check for grammar errors
+  let grammarIssues = [];
+  grammarErrors.forEach(({ pattern, issue, severity: errSeverity }) => {
+    if (pattern.test(sentence)) {
+      grammarIssues.push(issue);
+      if (errSeverity === 'HIGH') severity = 'HIGH';
+      else if (errSeverity === 'MEDIUM' && severity === 'LOW') severity = 'MEDIUM';
+    }
+  });
 
-  // Grammatical Accuracy Analysis
-  let grammar = "Generally accurate with minor errors";
-  if (patterns.contractions.test(sentence)) {
-    grammar = "Contains contractions inappropriate for formal writing";
-    issues.push("Informal contractions used");
-    fixes.push("Replace with full forms: 'don't'→'do not', 'can't'→'cannot'");
-    severity = 'HIGH';
-  }
+  // Check for basic vocabulary
+  let vocabIssues = [];
+  basicVocab.forEach(({ basic, better }) => {
+    if (basic.test(sentence)) {
+      const match = sentence.match(basic)?.[0];
+      vocabIssues.push(`"${match}" → ${better}`);
+      if (severity === 'LOW') severity = 'MEDIUM';
+    }
+  });
 
-  if (patterns.grammarErrors.test(sentence)) {
-    grammar = "Article usage errors detected";
-    issues.push("Incorrect article usage");
-    fixes.push("Correct articles: 'a university'→'a university' is correct, check other instances");
-    severity = 'HIGH';
-  }
-
-  // Check sentence complexity
+  // Additional checks
   const wordCount = sentence.split(' ').length;
-  if (wordCount < 8) {
-    grammar = "Overly simple sentence structure - lacks complexity for higher bands";
-    issues.push("Insufficient grammatical complexity");
-    fixes.push("Add subordinate clauses, relative clauses, or complex structures");
+  let taskRelevance = 'Addresses topic appropriately';
+  let coherence = 'Adequate sentence flow';
+
+  if (wordCount < 5) {
+    taskRelevance = 'Too brief - needs more development';
     severity = 'MEDIUM';
+  }
+
+  if (!sentence.match(/\b(however|moreover|furthermore|therefore|consequently|nevertheless)\b/i) && wordCount > 15) {
+    coherence = 'Lacks sophisticated linking words';
+    fixes.push('Add advanced connectors like "furthermore", "consequently"');
   }
 
   return {
-    taskResponse,
-    cohesion,
-    vocabulary,
-    grammar,
+    spellingGrammar: spellingIssues.length > 0 ? spellingIssues.join(', ') : grammarIssues.length > 0 ? grammarIssues.join(', ') : 'No major errors detected',
+    vocabulary: vocabIssues.length > 0 ? vocabIssues.join(', ') : 'Vocabulary adequate for task',
+    grammar: grammarIssues.length > 0 ? grammarIssues.join(', ') : 'Grammar generally accurate',
+    coherence,
+    taskRelevance,
     severity,
-    fixes: fixes.length > 0 ? fixes.join('; ') : "Consider enhancing sentence sophistication and precision"
+    fixes: fixes.length > 0 ? fixes.join('; ') : spellingIssues.concat(grammarIssues, vocabIssues).join('; ') || 'Consider enhancing sophistication'
   };
 };
 
-const generatePreciseMarkedText = (originalText: string): string => {
-  let improved = originalText;
+const calculateBandScore = (text: string): string => {
+  let score = 7.0;
   
-  // Precise replacements with clear marking
-  const replacements = [
-    { pattern: /\bvery\s+(\w+)/g, replacement: '[-very-] [+exceptionally+] $1' },
-    { pattern: /\bgood\b/gi, replacement: '[-good-] [+beneficial+]' },
-    { pattern: /\bbad\b/gi, replacement: '[-bad-] [+detrimental+]' },
-    { pattern: /\bbig\b/gi, replacement: '[-big-] [+substantial+]' },
-    { pattern: /\bsmall\b/gi, replacement: '[-small-] [+minimal+]' },
-    { pattern: /\ba lot of\b/gi, replacement: '[-a lot of-] [+numerous+]' },
-    { pattern: /\bpeople\b/gi, replacement: '[-people-] [+individuals+]' },
-    { pattern: /\bthink\b/gi, replacement: '[-think-] [+contend+]' },
-    { pattern: /\bbecause\b/gi, replacement: '[-because-] [+owing to the fact that+]' },
-    { pattern: /\bdon't\b/gi, replacement: '[-don\'t-] [+do not+]' },
-    { pattern: /\bcan't\b/gi, replacement: '[-can\'t-] [+cannot+]' },
-    { pattern: /\band\b/g, replacement: '{furthermore|and}' },
-    { pattern: /\bbut\b/g, replacement: '{however|but}' },
-    { pattern: /\bso\b/g, replacement: '{consequently|so}' }
-  ];
-
-  replacements.forEach(({ pattern, replacement }) => {
-    improved = improved.replace(pattern, replacement);
-  });
-
-  return improved;
+  // Deduct for basic vocabulary
+  if (text.match(/\b(good|bad|big|small|very|thing|stuff|get|make)\b/gi)) score -= 0.5;
+  
+  // Deduct for grammar errors
+  if (text.match(/\b(people is|much people|an university|depends of)\b/gi)) score -= 1.0;
+  
+  // Deduct for spelling errors
+  if (text.match(/\b(recieve|occured|seperate|definately)\b/gi)) score -= 0.5;
+  
+  // Deduct for contractions
+  if (text.match(/\b(don't|can't|won't|it's)\b/gi)) score -= 0.5;
+  
+  return Math.max(5.0, score).toFixed(1);
 };
 
-const generateSophisticatedBand9 = (originalText: string): string => {
-  let enhanced = originalText;
-  
-  // Advanced Band 9 transformations
-  const band9Replacements = [
-    { from: /\bvery\s+important\b/gi, to: 'of paramount significance' },
-    { from: /\bvery\s+good\b/gi, to: 'exceptionally advantageous' },
-    { from: /\bvery\s+bad\b/gi, to: 'profoundly detrimental' },
-    { from: /\bpeople\s+think\b/gi, to: 'individuals maintain' },
-    { from: /\bmany people\b/gi, to: 'a considerable proportion of the populace' },
-    { from: /\bin my opinion\b/gi, to: 'from my perspective' },
-    { from: /\bI think\b/gi, to: 'I would contend' },
-    { from: /\bbecause\b/gi, to: 'attributable to' },
-    { from: /\bso\b/g, to: 'consequently' },
-    { from: /\bbut\b/g, to: 'nevertheless' },
-    { from: /\band\b/g, to: 'moreover' },
-    { from: /\balso\b/gi, to: 'furthermore' },
-    { from: /\bfor example\b/gi, to: 'to exemplify this notion' },
-    { from: /\bin conclusion\b/gi, to: 'in synthesis' }
-  ];
-
-  band9Replacements.forEach(({ from, to }) => {
-    enhanced = enhanced.replace(from, to);
-  });
-
-  // Add sophisticated academic phrases
-  const sentences = enhanced.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const enhancedSentences = sentences.map((sentence, index) => {
-    let enhanced = sentence.trim();
-    
-    if (index === 0 && !enhanced.match(/^(In contemporary discourse|Throughout the annals of|It is widely postulated)/)) {
-      enhanced = 'In contemporary discourse, ' + enhanced.toLowerCase();
-    }
-    
-    if (enhanced.length < 100 && !enhanced.includes(',')) {
-      enhanced = enhanced.replace(/\.?$/, ', thereby illuminating the multifaceted nature of this phenomenon.');
-    }
-    
-    return enhanced;
-  });
-
-  return enhancedSentences.join('. ') + '.';
-};
-
-const countGrammarErrors = (text: string): string => {
-  const errors = [];
-  if (text.includes("don't") || text.includes("can't")) errors.push("Contractions");
-  if (text.match(/\b(a|an)\s+(university|unique)/gi)) errors.push("Article errors");
-  if (text.split(' ').some(word => word.length < 3)) errors.push("Sentence fragments");
-  return errors.length > 0 ? `${errors.length} found: ${errors.join(', ')}` : "None detected";
+const countSpellingErrors = (text: string): string => {
+  const commonMistakes = text.match(/\b(recieve|occured|seperate|definately|beggining|achive|enviroment|goverment)\b/gi);
+  return commonMistakes ? `${commonMistakes.length} found: ${commonMistakes.join(', ')}` : 'None detected';
 };
 
 const countVocabIssues = (text: string): string => {
@@ -440,4 +384,76 @@ export const parseDeepSeekResponse = (response: string) => {
     improvedText: improvedText,
     band9Version: band9Version
   };
+};
+
+const generatePreciseMarkedText = (originalText: string): string => {
+  let improved = originalText;
+  
+  // Precise replacements with clear marking
+  const replacements = [
+    { pattern: /\bvery\s+(\w+)/g, replacement: '[-very-] [+exceptionally+] $1' },
+    { pattern: /\bgood\b/gi, replacement: '[-good-] [+beneficial+]' },
+    { pattern: /\bbad\b/gi, replacement: '[-bad-] [+detrimental+]' },
+    { pattern: /\bbig\b/gi, replacement: '[-big-] [+substantial+]' },
+    { pattern: /\bsmall\b/gi, replacement: '[-small-] [+minimal+]' },
+    { pattern: /\ba lot of\b/gi, replacement: '[-a lot of-] [+numerous+]' },
+    { pattern: /\bpeople\b/gi, replacement: '[-people-] [+individuals+]' },
+    { pattern: /\bthink\b/gi, replacement: '[-think-] [+contend+]' },
+    { pattern: /\bbecause\b/gi, replacement: '[-because-] [+owing to the fact that+]' },
+    { pattern: /\bdon't\b/gi, replacement: '[-don\'t-] [+do not+]' },
+    { pattern: /\bcan't\b/gi, replacement: '[-can\'t-] [+cannot+]' },
+    { pattern: /\band\b/g, replacement: '{furthermore|and}' },
+    { pattern: /\bbut\b/g, replacement: '{however|but}' },
+    { pattern: /\bso\b/g, replacement: '{consequently|so}' }
+  ];
+
+  replacements.forEach(({ pattern, replacement }) => {
+    improved = improved.replace(pattern, replacement);
+  });
+
+  return improved;
+};
+
+const generateSophisticatedBand9 = (originalText: string): string => {
+  let enhanced = originalText;
+  
+  // Advanced Band 9 transformations
+  const band9Replacements = [
+    { from: /\bvery\s+important\b/gi, to: 'of paramount significance' },
+    { from: /\bvery\s+good\b/gi, to: 'exceptionally advantageous' },
+    { from: /\bvery\s+bad\b/gi, to: 'profoundly detrimental' },
+    { from: /\bpeople\s+think\b/gi, to: 'individuals maintain' },
+    { from: /\bmany people\b/gi, to: 'a considerable proportion of the populace' },
+    { from: /\bin my opinion\b/gi, to: 'from my perspective' },
+    { from: /\bI think\b/gi, to: 'I would contend' },
+    { from: /\bbecause\b/gi, to: 'attributable to' },
+    { from: /\bso\b/g, to: 'consequently' },
+    { from: /\bbut\b/g, to: 'nevertheless' },
+    { from: /\band\b/g, to: 'moreover' },
+    { from: /\balso\b/gi, to: 'furthermore' },
+    { from: /\bfor example\b/gi, to: 'to exemplify this notion' },
+    { from: /\bin conclusion\b/gi, to: 'in synthesis' }
+  ];
+
+  band9Replacements.forEach(({ from, to }) => {
+    enhanced = enhanced.replace(from, to);
+  });
+
+  // Add sophisticated academic phrases
+  const sentences = enhanced.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const enhancedSentences = sentences.map((sentence, index) => {
+    let enhanced = sentence.trim();
+    
+    if (index === 0 && !enhanced.match(/^(In contemporary discourse|Throughout the annals of|It is widely postulated)/)) {
+      enhanced = 'In contemporary discourse, ' + enhanced.toLowerCase();
+    }
+    
+    if (enhanced.length < 100 && !enhanced.includes(',')) {
+      enhanced = enhanced.replace(/\.?$/, ', thereby illuminating the multifaceted nature of this phenomenon.');
+    }
+    
+    return enhanced;
+  });
+
+  return enhancedSentences.join('. ') + '.';
 };

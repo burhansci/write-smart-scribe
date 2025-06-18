@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,20 +56,22 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
       if (lineMatch) {
         const lineContent = lineMatch[0];
         
-        // Extract each criterion with robust patterns
-        const taskResponseMatch = lineContent.match(/•\s*TASK RESPONSE:\s*([^\n•]+)/i);
-        taskResponse = taskResponseMatch ? taskResponseMatch[1].trim() : '';
-        
-        const cohesionMatch = lineContent.match(/•\s*COHERENCE & COHESION:\s*([^\n•]+)/i);
-        cohesion = cohesionMatch ? cohesionMatch[1].trim() : '';
-        
-        const vocabularyMatch = lineContent.match(/•\s*LEXICAL RESOURCE:\s*([^\n•]+)/i);
-        vocabulary = vocabularyMatch ? vocabularyMatch[1].trim() : '';
-        
-        const grammarMatch = lineContent.match(/•\s*GRAMMATICAL ACCURACY:\s*([^\n•]+)/i);
-        grammar = grammarMatch ? grammarMatch[1].trim() : '';
-        
+        // Extract specific error categories
+        const spellingGrammarMatch = lineContent.match(/•\s*SPELLING\/GRAMMAR ERRORS:\s*([^\n•]+)/i);
+        const vocabMatch = lineContent.match(/•\s*VOCABULARY ISSUES:\s*([^\n•]+)/i);
+        const grammarMatch = lineContent.match(/•\s*GRAMMAR CORRECTIONS:\s*([^\n•]+)/i);
+        const coherenceMatch = lineContent.match(/•\s*COHERENCE PROBLEMS:\s*([^\n•]+)/i);
+        const taskMatch = lineContent.match(/•\s*TASK RELEVANCE:\s*([^\n•]+)/i);
         const severityMatch = lineContent.match(/•\s*SEVERITY:\s*([^\n•]+)/i);
+        const fixesMatch = lineContent.match(/•\s*SPECIFIC FIXES:\s*([^\n•]+)/i);
+        
+        // Process extracted content
+        const spellingGrammar = spellingGrammarMatch ? spellingGrammarMatch[1].trim() : '';
+        vocabulary = vocabMatch ? vocabMatch[1].trim() : '';
+        grammar = grammarMatch ? grammarMatch[1].trim() : '';
+        cohesion = coherenceMatch ? coherenceMatch[1].trim() : '';
+        taskResponse = taskMatch ? taskMatch[1].trim() : '';
+        
         if (severityMatch) {
           const severityText = severityMatch[1].trim().toUpperCase();
           if (severityText.includes('HIGH')) severity = 'HIGH';
@@ -78,21 +79,27 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
           else if (severityText.includes('LOW')) severity = 'LOW';
         }
         
-        const fixesMatch = lineContent.match(/•\s*SPECIFIC FIXES:\s*([^\n•]+)/i);
         fixes = fixesMatch ? fixesMatch[1].trim() : '';
+        
+        // Combine spelling/grammar with grammar corrections
+        if (spellingGrammar && grammar) {
+          grammar = `${spellingGrammar}; ${grammar}`;
+        } else if (spellingGrammar) {
+          grammar = spellingGrammar;
+        }
         
         // Determine if there are real issues
         hasIssues = severity !== 'NONE' || 
-                   (taskResponse && !taskResponse.toLowerCase().includes('adequate')) ||
-                   (cohesion && cohesion.toLowerCase().includes('basic')) ||
-                   (vocabulary && vocabulary.toLowerCase().includes('basic')) ||
-                   (grammar && !grammar.toLowerCase().includes('accurate'));
+                   (spellingGrammar && !spellingGrammar.toLowerCase().includes('no')) ||
+                   (vocabulary && vocabulary.toLowerCase().includes('upgrade')) ||
+                   (grammar && !grammar.toLowerCase().includes('accurate')) ||
+                   (cohesion && cohesion.toLowerCase().includes('lack'));
       }
       
       // Enhanced fallback analysis if AI analysis not found
       if (!taskResponse && !cohesion && !vocabulary && !grammar) {
         console.log(`Using enhanced fallback for line ${lineNumber}`);
-        const fallbackAnalysis = performRobustAnalysis(sentence.trim());
+        const fallbackAnalysis = performSpecificAnalysis(sentence.trim());
         taskResponse = fallbackAnalysis.taskResponse;
         cohesion = fallbackAnalysis.cohesion;
         vocabulary = fallbackAnalysis.vocabulary;
@@ -118,98 +125,85 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
     return lines;
   };
 
-  const performRobustAnalysis = (sentence: string) => {
-    const issues: string[] = [];
+  const performSpecificAnalysis = (sentence: string) => {
+    const errors: string[] = [];
     const criticalIssues: string[] = [];
-    let severity: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE' = 'LOW';
+    let severity: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE' = 'NONE';
 
-    // Critical grammar patterns
-    const criticalPatterns = {
-      contractions: /\b(don't|can't|won't|it's|that's|I'm|you're|we're|they're|isn't|aren't)\b/g,
-      articlesErrors: /\b(a|an)\s+(university|unique|honest|hour|European)/gi,
-      subjectVerb: /\b(people|children|students)\s+(is|was|has)\b/gi,
-      doubleNegative: /\b(don't|can't|won't)\s+no\b/gi
+    // Specific error detection patterns
+    const specificErrors = {
+      spelling: [
+        { wrong: /\brecieve\b/gi, correct: 'receive' },
+        { wrong: /\boccured\b/gi, correct: 'occurred' },
+        { wrong: /\bseperate\b/gi, correct: 'separate' },
+        { wrong: /\bdefinately\b/gi, correct: 'definitely' }
+      ],
+      grammar: [
+        { pattern: /\ban university\b/gi, fix: 'Change "an university" to "a university"' },
+        { pattern: /\bpeople is\b/gi, fix: 'Change "people is" to "people are"' },
+        { pattern: /\bmuch people\b/gi, fix: 'Change "much people" to "many people"' },
+        { pattern: /\bdepends of\b/gi, fix: 'Change "depends of" to "depends on"' }
+      ],
+      vocabulary: [
+        { basic: /\bvery good\b/gi, better: 'excellent/outstanding' },
+        { basic: /\bvery bad\b/gi, better: 'detrimental/problematic' },
+        { basic: /\ba lot of\b/gi, better: 'numerous/substantial' },
+        { basic: /\bbig\b/gi, better: 'significant/substantial' }
+      ]
     };
 
-    // Vocabulary issues
-    const vocabPatterns = {
-      basic: /\b(good|bad|nice|big|small|very|really|thing|stuff|people|get|make|do)\b/gi,
-      informal: /\b(gonna|wanna|kinda|sorta|yeah|ok|okay|cool|awesome|amazing)\b/gi,
-      repetitive: /\b(\w+)\b.*\b\1\b/gi,
-      vague: /\b(some|many|lots of|a lot of|things|ways|aspects)\b/gi
-    };
+    // Check for specific spelling errors
+    let spellingErrors = [];
+    specificErrors.spelling.forEach(({ wrong, correct }) => {
+      if (wrong.test(sentence)) {
+        spellingErrors.push(`Spelling: "${sentence.match(wrong)?.[0]}" → "${correct}"`);
+        severity = 'HIGH';
+      }
+    });
 
-    // Task response analysis
-    let taskResponse = "Addresses the topic appropriately";
-    const wordCount = sentence.split(' ').length;
-    if (wordCount < 8) {
-      taskResponse = "Too brief - lacks sufficient development for the task requirements";
-      issues.push("insufficient development");
-      severity = 'MEDIUM';
-    } else if (wordCount > 40) {
-      taskResponse = "Overly complex - may confuse rather than clarify the point";
-      issues.push("excessive complexity");
-      severity = 'MEDIUM';
-    }
+    // Check for specific grammar errors
+    let grammarErrors = [];
+    specificErrors.grammar.forEach(({ pattern, fix }) => {
+      if (pattern.test(sentence)) {
+        grammarErrors.push(fix);
+        severity = 'HIGH';
+      }
+    });
 
-    // Coherence analysis
-    let cohesion = "Basic sentence structure with adequate flow";
-    if (!sentence.match(/\b(however|moreover|furthermore|nevertheless|consequently|therefore|thus|hence|additionally|specifically|particularly|notably)\b/i) && wordCount > 15) {
-      cohesion = "Lacks sophisticated cohesive devices expected for higher band scores";
-      issues.push("basic linking");
-      if (severity === 'LOW') severity = 'MEDIUM';
-    }
+    // Check for basic vocabulary
+    let vocabIssues = [];
+    specificErrors.vocabulary.forEach(({ basic, better }) => {
+      if (basic.test(sentence)) {
+        const match = sentence.match(basic)?.[0];
+        vocabIssues.push(`Replace "${match}" with ${better}`);
+        if (severity === 'NONE') severity = 'MEDIUM';
+      }
+    });
 
-    // Vocabulary analysis
-    let vocabulary = "Standard vocabulary range for academic writing";
-    if (vocabPatterns.basic.test(sentence)) {
-      vocabulary = "Contains basic vocabulary that significantly limits band score potential";
-      criticalIssues.push("basic vocabulary");
-      severity = 'HIGH';
-    }
-    if (vocabPatterns.informal.test(sentence)) {
-      vocabulary = "Inappropriate informal register completely unsuitable for IELTS academic writing";
-      criticalIssues.push("informal language");
-      severity = 'HIGH';
-    }
-
-    // Grammar analysis
-    let grammar = "Generally accurate with appropriate complexity";
-    if (criticalPatterns.contractions.test(sentence)) {
-      grammar = "Contains contractions which are completely inappropriate for formal academic writing";
-      criticalIssues.push("contractions");
-      severity = 'HIGH';
-    }
-    if (criticalPatterns.articlesErrors.test(sentence)) {
-      grammar = "Article usage errors that significantly impact comprehension";
-      criticalIssues.push("article errors");
-      severity = 'HIGH';
-    }
-    if (criticalPatterns.subjectVerb.test(sentence)) {
-      grammar = "Subject-verb agreement errors - major grammatical mistakes";
-      criticalIssues.push("subject-verb disagreement");
-      severity = 'HIGH';
-    }
-
-    // Generate specific fixes
-    const allIssues = [...criticalIssues, ...issues];
-    let fixes = "Consider enhancing language sophistication";
+    // Combine all specific issues
+    const allSpecificIssues = [...spellingErrors, ...grammarErrors, ...vocabIssues];
     
-    if (allIssues.length > 0) {
-      const fixSuggestions = [];
-      if (allIssues.includes("basic vocabulary")) {
-        fixSuggestions.push("Replace 'good'→'beneficial/advantageous', 'big'→'substantial/significant'");
+    let taskResponse = "Addresses the topic appropriately";
+    let cohesion = "Adequate sentence structure and flow";
+    let vocabulary = "Standard vocabulary for academic writing";
+    let grammar = "Generally accurate with minor issues";
+
+    if (allSpecificIssues.length > 0) {
+      if (spellingErrors.length > 0) {
+        grammar = `Critical spelling errors found: ${spellingErrors.join(', ')}`;
+      } else if (grammarErrors.length > 0) {
+        grammar = `Grammar errors detected: ${grammarErrors.join(', ')}`;
       }
-      if (allIssues.includes("contractions")) {
-        fixSuggestions.push("Change 'don't'→'do not', 'can't'→'cannot'");
+      
+      if (vocabIssues.length > 0) {
+        vocabulary = `Basic vocabulary limiting band score: ${vocabIssues.join(', ')}`;
       }
-      if (allIssues.includes("basic linking")) {
-        fixSuggestions.push("Add sophisticated connectors: 'furthermore', 'consequently', 'nevertheless'");
-      }
-      if (allIssues.includes("insufficient development")) {
-        fixSuggestions.push("Expand with specific examples, explanations, or supporting details");
-      }
-      fixes = fixSuggestions.join('; ');
+    }
+
+    const wordCount = sentence.split(' ').length;
+    if (wordCount < 6) {
+      taskResponse = "Too brief - needs more development and supporting details";
+      if (severity === 'NONE') severity = 'MEDIUM';
     }
 
     return {
@@ -217,9 +211,9 @@ const LineByLineAnalysis = ({ originalText, lineByLineAnalysis }: LineByLineAnal
       cohesion,
       vocabulary,
       grammar,
-      severity: criticalIssues.length > 0 ? 'HIGH' : severity,
-      fixes,
-      hasIssues: allIssues.length > 0
+      severity,
+      fixes: allSpecificIssues.join('; ') || 'Consider enhancing language sophistication',
+      hasIssues: allSpecificIssues.length > 0 || wordCount < 6
     };
   };
 
